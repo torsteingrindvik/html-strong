@@ -1,0 +1,19 @@
+[package]
+name = "html-strong"
+version = "0.1.0"
+edition = "2021"
+repository = "https://github.com/torsteingrindvik/html-strong"
+description = "Strongly typed HTML generation, suitable for server side rendering and templating."
+categories = ["asynchronous", "web-programming"]
+readme = "README.md"
+keywords = ["html", "web", "templates", "ssr", "server side renedering"]
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+mime = "0.3"
+url = "2"
+
+[dev-dependencies]
+axum = "0.4"
+tokio = { version = "1", features = ["full"] }
+pretty_assertions = "1"
