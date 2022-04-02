@@ -11,6 +11,8 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 mime = "0.3"
+tower-http = { version = "0.2", features = ["fs", "trace"] }
+tracing-subscriber = "0.3.10"
 url = "2"
 
 [dev-dependencies]

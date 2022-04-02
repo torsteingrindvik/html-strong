@@ -1,0 +1,49 @@
+table {
+	/* Because setting `cellpadding`, `cellspacing` to 0 is deprecated */
+	border-collapse: collapse;
+}
+
+#hnmain {
+	/* Because the `center` tag is deprecated */
+	margin-left : auto;
+	margin-right: auto;
+
+	/* Because the `bgcolor` attribute is deprecated */
+	background-color: #f6f6ef;
+
+	/* Because the `width` attribute is deprecated */
+	width: 85%;
+}
+
+#nav-td {
+	background-color: #ff6600;
+}
+
+#nav-table {
+	width: 100%
+}
+
+td.title {
+	/* Because the `align` attribute is deprecated */
+	text-align: right;
+
+	/* Because the `valign` attribute is deprecated */
+	vertical-align: top;
+}
+
+td.votelinks {
+	vertical-align: top;
+}
+
+#footer * {
+	text-align: center;
+}
+
+#footer table {
+	width: 100%;
+}
+
+#footer-divider {
+	background-color: #ff6600;
+	padding-top     : 1px;
+}
