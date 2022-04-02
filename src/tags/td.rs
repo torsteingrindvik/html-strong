@@ -4,7 +4,7 @@ use crate::global_attributes::Attribute;
 
 use super::Tag;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Colspan(NonZeroUsize);
 
 impl Attribute for Colspan {
@@ -24,7 +24,7 @@ pub fn td() -> Td {
 }
 
 /// Table data cell.
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct Td {
     colspan: Option<Colspan>,
 }

@@ -1,6 +1,6 @@
 use super::Attribute;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Title(String);
 
 impl Title {

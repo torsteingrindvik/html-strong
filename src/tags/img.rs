@@ -3,6 +3,7 @@ use crate::global_attributes::Attribute;
 use super::Tag;
 
 /// Source image.
+#[derive(Debug, Clone)]
 struct Src(String);
 
 impl Attribute for Src {
@@ -16,6 +17,7 @@ impl Attribute for Src {
 }
 
 /// Image width.
+#[derive(Debug, Clone)]
 struct Width(usize);
 
 impl Attribute for Width {
@@ -29,6 +31,7 @@ impl Attribute for Width {
 }
 
 /// Image height.
+#[derive(Debug, Clone)]
 struct Height(usize);
 
 impl Attribute for Height {
@@ -42,6 +45,7 @@ impl Attribute for Height {
 }
 
 /// Img.
+#[derive(Debug, Clone)]
 pub struct Img {
     src: Src,
     width: Option<Width>,

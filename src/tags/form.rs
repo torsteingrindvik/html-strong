@@ -3,6 +3,7 @@ use crate::global_attributes::Attribute;
 use super::Tag;
 
 /// Method used when submitting form.
+#[derive(Debug, Clone)]
 pub enum Method {
     Get,
     Post,
@@ -24,6 +25,7 @@ impl Attribute for Method {
 }
 
 /// Url which processes the form.
+#[derive(Debug, Clone)]
 struct Action(String);
 
 impl Attribute for Action {
@@ -37,6 +39,7 @@ impl Attribute for Action {
 }
 
 /// Data form.
+#[derive(Debug, Clone)]
 pub struct Form {
     method: Method,
     action: Action,

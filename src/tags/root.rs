@@ -1,6 +1,7 @@
 use super::Tag;
 
 /// Root node.
+#[derive(Debug, Clone)]
 pub struct Root;
 
 impl Tag for Root {

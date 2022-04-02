@@ -1,6 +1,7 @@
 use super::Tag;
 
 /// Script.
+#[derive(Debug, Clone)]
 pub struct Script;
 
 impl Tag for Script {

@@ -23,7 +23,7 @@ table {
 	width: 100%
 }
 
-td.title {
+.title-rank {
 	/* Because the `align` attribute is deprecated */
 	text-align: right;
 
@@ -31,7 +31,7 @@ td.title {
 	vertical-align: top;
 }
 
-td.votelinks {
+.votelinks {
 	vertical-align: top;
 }
 

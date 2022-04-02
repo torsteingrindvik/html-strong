@@ -2,6 +2,7 @@ use crate::global_attributes::Attribute;
 
 use super::Tag;
 
+#[derive(Debug, Clone)]
 pub enum Charset {
     Utf8,
 }
@@ -16,7 +17,7 @@ impl Attribute for Charset {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Name {
     Keywords,
     Description,
@@ -42,6 +43,7 @@ impl Attribute for Name {
     }
 }
 
+#[derive(Debug, Clone)]
 pub enum HttpEquiv {
     Refresh,
 }
@@ -59,6 +61,7 @@ impl Attribute for HttpEquiv {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Content(String);
 
 impl Content {
@@ -90,6 +93,7 @@ impl From<&str> for Content {
     }
 }
 
+#[derive(Debug, Clone)]
 pub enum Meta {
     Charset(Charset),
     Name((Name, Content)),

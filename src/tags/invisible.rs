@@ -1,6 +1,7 @@
 use super::Tag;
 
 /// Tagless node.
+#[derive(Debug, Clone)]
 pub struct Invisible;
 
 impl Tag for Invisible {

@@ -2,6 +2,7 @@ use crate::global_attributes::Attribute;
 
 use super::{link::Href, Tag};
 
+#[derive(Debug, Clone)]
 pub enum Target {
     Blank,
     Parent,
@@ -26,6 +27,7 @@ impl Attribute for Target {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct A {
     href: Option<Href>,
     target: Option<Target>,

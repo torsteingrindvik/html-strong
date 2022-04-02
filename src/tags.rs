@@ -60,6 +60,9 @@
 
 /// Tagless node.
 // pub(crate) mod invisible;
+use std::fmt;
+
+use dyn_clonable::clonable;
 
 ////////////////////////////////////////////////////////////////////////////////
 // We cannot create a blanket impl of Into<Node> for any struct that implements
@@ -134,7 +137,8 @@ impl_into_node_and_export_priv![invisible::Invisible, root::Root];
 ////////////////////////////////////////////////////////////////////////////////
 
 /// An HTML tag.
-pub trait Tag {
+#[clonable]
+pub trait Tag: Send + fmt::Debug + Clone {
     /// The tag's name.
     fn name(&self) -> &'static str;
 

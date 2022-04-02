@@ -1,6 +1,7 @@
 use super::Tag;
 
 /// Table row.
+#[derive(Debug, Clone)]
 pub struct Tr;
 
 impl Tag for Tr {

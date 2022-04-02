@@ -1,5 +1,6 @@
 use super::Tag;
 
+#[derive(Debug, Clone)]
 pub struct Doctype;
 
 impl Tag for Doctype {

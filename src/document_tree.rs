@@ -31,9 +31,10 @@ use crate::{
 //     Node
 // }
 
+#[derive(Debug, Clone)]
 pub struct Node {
-    tag: Box<dyn Tag>,
     global_attributes: Vec<Box<dyn Attribute>>,
+    tag: Box<dyn Tag>,
     // id: Option<String>,
     text: Option<String>,
     children: Vec<Node>,
@@ -245,16 +246,13 @@ impl Node {
 
     #[must_use]
     pub fn add_class(mut self, class: &str) -> Self {
+        // TODO: It would be better if we had something like the
+        // hashmap entry API, such that we can modify an existing attribute.
+        //
+        // Browser does not like two instances of `class`.
         self.global_attributes.push(Box::new(Class::new(class)));
         self
     }
-
-    // pub fn add_attr2<A>(mut self, attribute: A) -> Self
-    // where A: Attribute
-    // {
-    //     self.global_attributes.push(Box::new(attribute));
-    //     self
-    // }
 
     /// Set the node's id.
     #[must_use]

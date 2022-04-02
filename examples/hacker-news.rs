@@ -1,18 +1,26 @@
 use axum::{
+    extract::Extension,
     http::StatusCode,
     response::Html,
     routing::{get, get_service},
     Router,
 };
-use std::net::SocketAddr;
-use tower_http::{services::ServeDir, trace::TraceLayer};
+use std::{io, net::SocketAddr, sync::Arc, time::Instant};
+use tower::ServiceBuilder;
+use tower_http::{
+    services::{ServeDir, ServeFile},
+    trace::TraceLayer,
+};
+use tracing::info;
 
 use html_strong::{
     document_tree::{o, Node},
     global_attributes::Lang,
-    tags::td::td,
-    tags::*,
+    tags::html,
 };
+use tokio::sync::RwLock;
+
+// type SharedState = Arc<RwLock<hacker_news::State>>;
 
 fn get_response(contents: Node) -> Html<String> {
     let response = contents
@@ -22,244 +30,364 @@ fn get_response(contents: Node) -> Html<String> {
     Html(response)
 }
 
-fn table() -> Node {
-    o(Table).set_id("hnmain")
-    // Missing: border (deprecated)
-    // Missing: cellpadding (deprecated)
-    // Missing: cellspacing (deprecated)
-    // Missing: width (deprecated)
-    // Missing: bgcolor (deprecated)
-}
+#[derive(Debug, Default, Clone)]
+pub struct SharedState(pub Arc<RwLock<Vec<hacker_news::post::Post>>>);
 
-fn a(href: &str, text: &str) -> Node {
-    o(A::href(href)).add_text(text)
-}
+mod hacker_news {
 
-fn a2(href_text: &str) -> Node {
-    o(A::href(href_text)).add_text(href_text)
-}
+    use cached::proc_macro::cached;
+    use html_strong::{
+        document_tree::{o, Node},
+        tags::td::td,
+        tags::*,
+    };
 
-const SPACER: &str = " | ";
+    const PIPE_DELIMITER: &str = " | ";
 
-fn tr_nav() -> Node {
-    let td_logo = o(td())
-        .add_style("width:18px;padding-right:4px;")
-        .kid(o(A::href("https://news.ycombinator.com")).kid(
-            o(Img::new_sized("/static/y18.gif", 18, 18)).add_style("border:1px white solid;"),
-        ));
+    // Shows in inspector as a "whitespace only text node" (in some browsers)
+    const ONE_SPACE: &str = " ";
 
-    let td_links = o(td()).add_style("line-height:12pt; height:10px;").kid(
-        o(Span)
-            .add_class("pagetop")
-            .kid(o(B).add_class("hnname").kid(a("news", "Hacker News")))
-            .add_text(" ") // Shows in inspector as a "whitespace only text node" (in some browsers)
-            .kid(a("newest", "new"))
-            .add_text(SPACER)
-            .kid(a("newcomments", "comments"))
-            .add_text(SPACER)
-            .kid(a2("ask"))
-            .add_text(SPACER)
-            .kid(a2("show"))
-            .add_text(SPACER)
-            .kid(a2("jobs"))
-            .add_text(SPACER)
-            .kid(a2("submit")),
-    );
-
-    let td_login = o(td())
-        .add_style("text-align:right;padding-right:4px;")
-        .kid(
-            o(Span)
-                .add_class("pagetop")
-                .kid(a("login?goto=news", "login")),
-        );
-
-    o(Tr).kid(
-        o(td()).set_id("nav-td").kid(
-            o(Table)
-                .set_id("nav-table")
-                .add_style("padding:2px")
-                .kid(o(Tr).kid(td_logo).kid(td_links).kid(td_login)),
-        ),
-    )
-}
-
-fn tr_spacer() -> Node {
-    o(Tr)
-        .set_id("pagespace")
-        .set_title("") // Well ok
-        .add_style("height:10px")
-}
-
-fn entry_main() -> Node {
-    o(Tr)
-        .add_class("athing")
-        .set_id("12345678")
-        .kid(
-            o(td()) // Missing: align, valign
-                .add_class("title")
-                .kid(o(Span).add_class("rank").add_text("1.")),
-        )
-        .kid(
-            o(td()).add_class("votelinks").kid(
-                o(A::href("vote?id=12345678&how=up&goto=news"))
-                    .kid(o(Div).add_class("votearrow").set_title("upvote")),
-            ),
-        )
-        .kid(
-            o(td())
-                .add_class("title")
-                .kid(
-                    o(A::href("https://nrk.no"))
-                        .add_class("titlelink")
-                        .add_text("Thing happens and it makes the news"),
-                )
-                .kid(
-                    o(Span)
-                        .add_class("sitebit")
-                        .add_class("comhead")
-                        .add_text(" (")
-                        .kid(
-                            o(A::href("from?site=nrk.no"))
-                                .kid(o(Span).add_class("sitestr"))
-                                .add_text("nrk.no"),
-                        )
-                        .add_text(")"),
-                ),
-        )
-}
-
-fn entry_points() -> Node {
-    o(Tr).kid(Td::colspan(2)).kid(
-        o(td())
-            .add_class("subtext")
-            .kid(o(Span).add_text("123 points"))
-            .add_text(" by ")
-            .kid(
-                o(A::href("user?id=togr"))
-                    .add_class("hnuser")
-                    .add_text("togr"),
-            )
-            .kid(
-                o(Span)
-                    .add_class("age")
-                    .set_title("2022-03-28T16:35:29")
-                    .kid(o(A::href("item?id=12345678")).add_text("1 hour ago")),
-            )
-            .kid(Span)
-            .add_text(SPACER)
-            .kid(o(A::href("hide?id=12345678&goto=news")).add_text("hide"))
-            .add_text(SPACER)
-            .kid(o(A::href("item?id=12345678")).add_text("130 comments")),
-    )
-}
-
-fn entry_spacer() -> Node {
-    o(Tr).add_class("spacer").add_style("height:5px")
-}
-
-fn tr_body() -> Node {
-    let mut items = o(Table).add_class("itemlist");
-
-    for _ in 0..25 {
-        items.push_kid(entry_main());
-        items.push_kid(entry_points());
-        items.push_kid(entry_spacer());
+    fn a(href: &str, text: &str) -> Node {
+        o(A::href(href)).add_text(text)
     }
 
-    o(Tr).kid(o(td()).kid(items))
+    fn a2(href_text: &str) -> Node {
+        o(A::href(href_text)).add_text(href_text)
+    }
+
+    #[cached]
+    fn body_nav() -> Node {
+        let td_logo = o(td()).add_style("width:18px;padding-right:4px;").kid(
+            o(A::href("https://news.ycombinator.com")).kid(
+                o(Img::new_sized("/static/y18.gif", 18, 18)).add_style("border:1px white solid;"),
+            ),
+        );
+
+        let td_links = o(td()).add_style("line-height:12pt; height:10px;").kid(
+            o(Span)
+                .add_class("pagetop")
+                .kid(o(B).add_class("hnname").kid(a("news", "Hacker News")))
+                .add_text(ONE_SPACE)
+                .kid(a("newest", "new"))
+                .add_text(PIPE_DELIMITER)
+                .kid(a("newcomments", "comments"))
+                .add_text(PIPE_DELIMITER)
+                .kid(a2("ask"))
+                .add_text(PIPE_DELIMITER)
+                .kid(a2("show"))
+                .add_text(PIPE_DELIMITER)
+                .kid(a2("jobs"))
+                .add_text(PIPE_DELIMITER)
+                .kid(a2("submit")),
+        );
+
+        let td_login = o(td())
+            .add_style("text-align:right;padding-right:4px;")
+            .kid(
+                o(Span)
+                    .add_class("pagetop")
+                    .kid(a("login?goto=news", "login")),
+            );
+
+        o(Tr).kid(
+            o(td()).set_id("nav-td").kid(
+                o(Table)
+                    .set_id("nav-table")
+                    .add_style("padding:2px")
+                    .kid(o(Tr).kid(td_logo).kid(td_links).kid(td_login)),
+            ),
+        )
+    }
+
+    #[cached]
+    fn body_spacer() -> Node {
+        o(Tr)
+            .set_id("pagespace")
+            .set_title("") // Well ok
+            .add_style("height:10px")
+    }
+
+    #[cached]
+    pub fn head() -> Node {
+        o(Head)
+            .kid(Meta::name_content("referrer", "origin"))
+            .kid(Meta::viewport_sane())
+            .kid(Link::stylesheet(mime::TEXT_CSS, "/static/news.css"))
+            .kid(Link::stylesheet(mime::TEXT_CSS, "/static/news-extra.css"))
+            .kid(Link::icon("favicon.ico"))
+            .kid(Link::alternate("application/rss+xml", "RSS", "rss"))
+            .kid(o(Title).add_text("Hacker News"))
+    }
+
+    pub mod post {
+        use std::time::{Duration, Instant};
+
+        use tracing::info;
+
+        use crate::SharedState;
+
+        use super::*;
+
+        #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+        pub struct Post {
+            pub upvotes: usize,
+            pub author: String,
+            pub id: usize,
+            pub comments: usize,
+            pub rank: usize,
+            pub title: String,
+            pub url: String,
+            pub shorturl: String,
+        }
+
+        pub async fn worker(state: SharedState) {
+            info!("API worker started");
+            let mut n = 0;
+
+            loop {
+                let post = post::Post {
+                    upvotes: n * 10,
+                    author: "authoria".into(),
+                    id: n,
+                    comments: 100 + n,
+                    rank: n + 1,
+                    title: format!("This is post with index {n}"),
+                    url: format!("https://nrk.no/{}", n),
+                    shorturl: "nrk.no".into(),
+                };
+
+                let now = Instant::now();
+                state.0.write().await.push(post);
+
+                info!("New post added (held write lock for {:?})", now.elapsed());
+
+                tokio::time::sleep(Duration::from_secs(5)).await;
+                n += 1;
+            }
+        }
+
+        #[cached]
+        fn spacer() -> Node {
+            o(Tr).add_class("spacer").add_style("height:5px")
+        }
+
+        #[cached]
+        fn post(post: Post) -> Node {
+            Node::root()
+                .kid(
+                    o(Tr)
+                        .add_class("athing")
+                        .set_id(&post.id.to_string())
+                        .kid(
+                            o(td()).add_class("title-rank").kid(
+                                o(Span)
+                                    .add_class("rank")
+                                    .add_text(&format!("{}.", post.rank)),
+                            ),
+                        )
+                        .kid(
+                            o(td()).add_class("votelinks").kid(
+                                o(A::href(&format!("vote?id={}&how=up&goto=news", post.id)))
+                                    .set_id(&format!("up_{}", post.id))
+                                    .kid(o(Div).add_class("votearrow").set_title("upvote")),
+                            ),
+                        )
+                        .kid(
+                            o(td())
+                                .add_class("title")
+                                .kid(
+                                    o(A::href(&post.url))
+                                        .add_class("titlelink")
+                                        .add_text(&post.title),
+                                )
+                                .kid(
+                                    o(Span)
+                                        .add_class("sitebit comhead")
+                                        .add_text(" (")
+                                        .kid(
+                                            o(A::href(&format!("from?site={}", &post.shorturl)))
+                                                .kid(o(Span).add_class("sitestr"))
+                                                .add_text(&post.shorturl),
+                                        )
+                                        .add_text(")"),
+                                ),
+                        ),
+                )
+                .kid(
+                    o(Tr).kid(Td::colspan(2)).kid(
+                        o(td())
+                            .add_class("subtext")
+                            .kid(o(Span).add_text(&format!("{} points", post.upvotes)))
+                            .add_text(" by ")
+                            .kid(
+                                o(A::href(&format!("user?id={}", post.author)))
+                                    .add_class("hnuser")
+                                    .add_text(&post.author)
+                                    .add_text(ONE_SPACE),
+                            )
+                            .kid(
+                                o(Span)
+                                    .add_class("age")
+                                    .set_title("2022-03-28T16:35:29") // TODO: This thing
+                                    .kid(
+                                        o(A::href(&format!("item?id={}", post.id)))
+                                            .add_text("1 hour ago"),
+                                    ),
+                            )
+                            .kid(Span)
+                            .add_text(PIPE_DELIMITER)
+                            .kid(
+                                o(A::href(&format!("hide?id={}&goto=news", post.id)))
+                                    .add_text("hide"),
+                            )
+                            .add_text(PIPE_DELIMITER)
+                            .kid(
+                                o(A::href(&format!("item?id={}", { post.id })))
+                                    .add_text(&format!("{} comments", post.comments)),
+                            ),
+                    ),
+                )
+        }
+
+        #[allow(clippy::from_over_into)]
+        impl Into<Node> for Post {
+            fn into(self) -> Node {
+                Node::root().kid(post(self)).kid(spacer())
+            }
+        }
+    }
+
+    fn body_posts(posts: Vec<post::Post>) -> Node {
+        let mut items = o(Table).add_class("itemlist");
+
+        for post in posts {
+            items.push_kid(post)
+        }
+
+        // for n in 0..25 {
+        //     items.push_kid(post::Post {
+        //         upvotes: n * 10,
+        //         author: "authoria".into(),
+        //         id: n,
+        //         comments: 100 + n,
+        //         rank: n + 1,
+        //         title: format!("This is post with index {n}"),
+        //         url: format!("https://nrk.no/{}", n),
+        //         shorturl: "nrk.no".into(),
+        //     })
+        // }
+
+        o(Tr).kid(o(td()).kid(items))
+    }
+
+    #[cached]
+    pub fn body(posts: Vec<post::Post>) -> Node {
+        o(Body).kid(
+            o(Table)
+                .set_id("hnmain")
+                .kid(body_nav())
+                .kid(body_spacer())
+                .kid(body_posts(posts))
+                .kid(body_footer()),
+        )
+    }
+
+    #[cached]
+    pub fn script() -> Node {
+        o(Script)
+    }
+
+    #[cached]
+    fn body_footer() -> Node {
+        let invisible_gif = o(Img::new_sized("/static/s.gif", 0, 10));
+        let divider = o(Table).kid(o(Tr).kid(td()).set_id("footer-divider"));
+        let applications = o(A::href("https://www.ycombinator.com/apply/"))
+            .add_text("Applications are open for YC Summer 2022");
+
+        let links = o(Span)
+            .add_class("yclinks")
+            .kid(a("newsguidelines.html", "Guidelines"))
+            .add_text(PIPE_DELIMITER)
+            .kid(a("newsfaq.html", "FAQ"))
+            .add_text(PIPE_DELIMITER)
+            .kid(a("lists", "Lists"))
+            .add_text(PIPE_DELIMITER)
+            .kid(a("https://github.com/HackerNews/API", "API"))
+            .add_text(PIPE_DELIMITER)
+            .kid(a("security.html", "Security"))
+            .add_text(PIPE_DELIMITER)
+            .kid(a("http://www.ycombinator.com/legal/", "Legal"))
+            .add_text(PIPE_DELIMITER)
+            .kid(a("http://www.ycombinator.com/apply/", "Apply"))
+            .add_text(PIPE_DELIMITER)
+            .kid(a("mailto:hn@ycombinator.com", "Contact"));
+
+        let search = o(Form::new(form::Method::Get, "//hn.algolia.com/"))
+            .add_text("Search: ")
+            .kid(o(Input));
+
+        o(Tr).set_id("footer").kid(
+            o(td())
+                .kid(invisible_gif)
+                .kid(divider)
+                .kid(Br)
+                .kid(applications)
+                .kid(Br)
+                .kid(Br)
+                .kid(links)
+                .kid(Br)
+                .kid(Br)
+                .kid(search),
+        )
+    }
 }
 
-fn tr_footer() -> Node {
-    let invisible_gif = o(Img::new_sized("/static/s.gif", 0, 10));
-    let divider = o(Table).kid(o(Tr).kid(td()).set_id("footer-divider"));
-    let applications = o(A::href("https://www.ycombinator.com/apply/"))
-        .add_text("Applications are open for YC Summer 2022");
+async fn hacker_news(Extension(state): Extension<SharedState>) -> Html<String> {
+    let now = Instant::now();
+    let posts = state.0.read().await.clone();
+    info!("Post acquired (held read lock for {:?})", now.elapsed());
 
-    let links = o(Span)
-        .add_class("yclinks")
-        .kid(a("newsguidelines.html", "Guidelines"))
-        .add_text(SPACER)
-        .kid(a("newsfaq.html", "FAQ"))
-        .add_text(SPACER)
-        .kid(a("lists", "Lists"))
-        .add_text(SPACER)
-        .kid(a("https://github.com/HackerNews/API", "API"))
-        .add_text(SPACER)
-        .kid(a("security.html", "Security"))
-        .add_text(SPACER)
-        .kid(a("http://www.ycombinator.com/legal/", "Legal"))
-        .add_text(SPACER)
-        .kid(a("http://www.ycombinator.com/apply/", "Apply"))
-        .add_text(SPACER)
-        .kid(a("mailto:hn@ycombinator.com", "Contact"));
-
-    let search = o(Form::new(form::Method::Get, "//hn.algolia.com/"))
-        .add_text("Search: ")
-        .kid(o(Input));
-
-    o(Tr).set_id("footer").kid(
-        o(td())
-            .kid(invisible_gif)
-            .kid(divider)
-            .kid(Br)
-            .kid(applications)
-            .kid(Br)
-            .kid(Br)
-            .kid(links)
-            .kid(Br)
-            .kid(Br)
-            .kid(search),
+    get_response(
+        o(html::Html)
+            .add_attr(("op", "news"))
+            .add_attr(Lang::English)
+            .kid(hacker_news::head())
+            .kid(hacker_news::body(posts))
+            .kid(hacker_news::script()),
     )
 }
 
-async fn hacker_news() -> Html<String> {
-    let head = o(Head)
-        .kid(Meta::name_content("referrer", "origin"))
-        .kid(Meta::viewport_sane())
-        .kid(Link::stylesheet(mime::TEXT_CSS, "/static/news.css"))
-        .kid(Link::stylesheet(mime::TEXT_CSS, "/static/news-extra.css"))
-        .kid(Link::icon("favicon.ico"))
-        .kid(Link::alternate("application/rss+xml", "RSS", "rss"))
-        .kid(o(Title).add_text("Hacker News"));
-
-    let table = table()
-        .kid(tr_nav())
-        .kid(tr_spacer())
-        .kid(tr_body())
-        .kid(tr_footer());
-
-    let body = o(Body).kid(table);
-
-    let script = o(Script);
-
-    let contents = o(html::Html)
-        .add_attr(("op", "news"))
-        .add_attr(Lang::English)
-        .kid(head)
-        .kid(body)
-        .kid(script);
-
-    get_response(contents)
+async fn internal_server_error(error: io::Error) -> (StatusCode, String) {
+    (
+        StatusCode::INTERNAL_SERVER_ERROR,
+        format!("Unhandled internal error: {}", error),
+    )
 }
 
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
 
+    let state = SharedState::default();
+    tokio::spawn(hacker_news::post::worker(state.clone()));
+
     // build our application with a route
     let app = Router::new()
         .route("/", get(hacker_news))
+        .route(
+            "/favicon.ico",
+            get_service(ServeFile::new("examples-static/favicon.ico"))
+                .handle_error(internal_server_error),
+        )
         .nest(
             "/static",
-            get_service(ServeDir::new("examples-static")).handle_error(|error| async move {
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    format!("Unhandled internal error: {}", error),
-                )
-            }),
+            get_service(ServeDir::new("examples-static")).handle_error(internal_server_error),
         )
-        .layer(TraceLayer::new_for_http());
+        .layer(
+            ServiceBuilder::new()
+                .layer(TraceLayer::new_for_http())
+                .layer(Extension(state)),
+        );
 
     // run it
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));

@@ -1,3 +1,7 @@
+use std::fmt;
+
+use dyn_clonable::clonable;
+
 macro_rules! decl_mod_pub_use {
     ( $( $pre:ident::$post:ident ),* ) => {
         $(
@@ -9,7 +13,8 @@ macro_rules! decl_mod_pub_use {
 
 decl_mod_pub_use![id::Id, class::Class, lang::Lang, style::Style, title::Title];
 
-pub trait Attribute {
+#[clonable]
+pub trait Attribute: Send + fmt::Debug + Clone {
     /// The attribute's name.
     fn name(&self) -> &'static str;
 

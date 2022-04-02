@@ -5,6 +5,7 @@ use super::Tag;
 ///
 /// Quote:
 ///     > The <b> HTML element is used to draw the reader's attention to the element's contents, which are not otherwise granted special importance.
+#[derive(Debug, Clone)]
 pub struct B;
 
 impl Tag for B {

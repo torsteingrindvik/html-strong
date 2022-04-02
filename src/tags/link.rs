@@ -3,6 +3,7 @@ use crate::global_attributes::Attribute;
 use super::Tag;
 
 /// Mime
+#[derive(Debug, Clone)]
 pub struct Title(String);
 
 impl Attribute for Title {
@@ -16,7 +17,7 @@ impl Attribute for Title {
 }
 
 /// Mime
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Rel {
     Stylesheet,
     Icon,
@@ -39,6 +40,7 @@ impl Attribute for Rel {
 }
 
 /// Mime
+#[derive(Debug, Clone)]
 pub struct Mime(String);
 
 impl Mime {
@@ -72,6 +74,7 @@ impl Attribute for Mime {
 }
 
 /// Href
+#[derive(Debug, Clone)]
 pub struct Href(String);
 
 impl From<url::Url> for Mime {
@@ -100,6 +103,7 @@ impl Attribute for Href {
 
 /// Link.
 /// See [reference](https://developer.mozilla.org/en-US/docs/Web/HTML/Link_types).
+#[derive(Debug, Clone)]
 pub enum Link {
     Stylesheet {
         rel: Rel,

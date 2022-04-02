@@ -1,6 +1,7 @@
 use super::Tag;
 
 /// Span.
+#[derive(Debug, Clone)]
 pub struct Span;
 
 impl Tag for Span {
