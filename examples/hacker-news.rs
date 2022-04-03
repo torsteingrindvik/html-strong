@@ -20,8 +20,6 @@ use html_strong::{
 };
 use tokio::sync::RwLock;
 
-// type SharedState = Arc<RwLock<hacker_news::State>>;
-
 fn get_response(contents: Node) -> Html<String> {
     let response = contents
         .render_string()
@@ -133,18 +131,24 @@ mod hacker_news {
         pub struct Post {
             /// Author
             pub by: String,
+
             /// Number of comments
             pub descendants: usize,
+
             /// Story id
             pub id: usize,
+
             /// Comments
             // pub kids: usize,
             /// Upvotes
             pub score: usize,
+
             /// Time in ?? format
             pub time: usize,
+
             /// Story title
             pub title: String,
+
             /// Story url. TODO: Short version?
             pub url: Option<String>,
 
