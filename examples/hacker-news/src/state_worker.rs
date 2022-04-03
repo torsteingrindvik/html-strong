@@ -45,6 +45,9 @@ pub async fn worker(state: SharedState) {
             }
         };
 
+        // Go from [Story] to [(usize, Story)], to create a mapping.
+        let stories = stories.into_iter().map(|story| (story.id, story)).collect();
+
         {
             let now = Instant::now();
             let mut state = state.0.write().await;

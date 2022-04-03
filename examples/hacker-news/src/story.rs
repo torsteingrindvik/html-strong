@@ -20,6 +20,9 @@ pub struct Story {
     /// Story id
     pub id: usize,
 
+    /// Story text, if any
+    pub text: Option<String>,
+
     /// Comments
     pub kids: Option<Vec<usize>>,
 

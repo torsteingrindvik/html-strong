@@ -1,18 +1,22 @@
 use crate::state::SharedState;
 use crate::story::Story;
 
-use axum::{extract::Extension, response::Html};
+use axum::{
+    extract::{Extension, Query},
+    response::Html,
+};
 use cached::proc_macro::cached;
 use html_strong::{
     document_tree::{o, Node},
     global_attributes::Lang,
     tags::{
-        form, html, td::td, Body, Br, Form, Head, Img, Input, Link, Meta, Script, Span, Table,
-        Title, Tr, A, B,
+        form, html, td::td, Body, Br, Div, Form, Head, Img, Input, Link, Meta, Script, Span, Table,
+        Td, Title, Tr, A, B,
     },
 };
+use serde::Deserialize;
 use std::time::Instant;
-use tracing::info;
+use tracing::debug;
 
 fn get_response(contents: Node) -> Html<String> {
     let response = contents
@@ -84,16 +88,53 @@ fn body_spacer() -> Node {
         .add_style("height:10px")
 }
 
+/// Get the <head>...</head> contents.
+/// The title differs on the frontpage vs. the comment page.
+///
+/// The frontpage wants the RSS alternate element, the comment page does not.
 #[cached]
-fn head() -> Node {
-    o(Head)
+fn head(title: String, add_alternate: bool) -> Node {
+    let mut head = o(Head)
         .kid(Meta::name_content("referrer", "origin"))
         .kid(Meta::viewport_sane())
         .kid(Link::stylesheet(mime::TEXT_CSS, "/static/news.css"))
         .kid(Link::stylesheet(mime::TEXT_CSS, "/static/news-extra.css"))
-        .kid(Link::icon("favicon.ico"))
-        .kid(Link::alternate("application/rss+xml", "RSS", "rss"))
-        .kid(o(Title).add_text("Hacker News"))
+        .kid(Link::icon("favicon.ico"));
+    if add_alternate {
+        head.push_kid(Link::alternate("application/rss+xml", "RSS", "rss"))
+    }
+
+    head.kid(o(Title).add_text(&title))
+}
+
+fn body_comments(story: Story) -> Node {
+    let fatitem = o(Table)
+        .add_class("fatitem")
+        .kid(
+            o(Tr)
+                .add_class("athing")
+                .set_id(&story.id.to_string())
+                .kid(
+                    o(Td::default())
+                        .add_class("title")
+                        .kid(o(Span).add_class("rank")),
+                )
+                .kid(
+                    o(Td::default()).add_class("votelinks").kid(
+                        o(A::href("todo :)"))
+                            .set_id(&format!("up_{}", story.id))
+                            .kid(o(Div).add_class("votearrow").set_title("upvote")),
+                    ),
+                ),
+        )
+        .kid(
+            o(Tr)
+                .kid(o(Td::colspan(2)))
+                // TODO: Rest of this thing
+                .kid(o(Td::default()).add_class("subtext")),
+        );
+
+    o(Tr).kid(o(td()).kid(fatitem))
 }
 
 fn body_stories(stories: Vec<Story>) -> Node {
@@ -107,14 +148,13 @@ fn body_stories(stories: Vec<Story>) -> Node {
     o(Tr).kid(o(td()).kid(items))
 }
 
-#[cached]
-fn body(stories: Vec<Story>) -> Node {
+fn body(body_node: Node) -> Node {
     o(Body).kid(
         o(Table)
             .set_id("hnmain")
             .kid(body_nav())
             .kid(body_spacer())
-            .kid(body_stories(stories))
+            .kid(body_node)
             .kid(body_footer()),
     )
 }
@@ -168,17 +208,46 @@ fn body_footer() -> Node {
     )
 }
 
-pub async fn hacker_news(Extension(state): Extension<SharedState>) -> Html<String> {
+pub async fn front_page(Extension(state): Extension<SharedState>) -> Html<String> {
     let now = Instant::now();
-    let stories = state.0.read().await.clone();
-    info!("Stories acquired (held read lock for {:?})", now.elapsed());
+    let stories = state.0.read().await.values().cloned().collect();
+    debug!("Stories acquired (held read lock for {:?})", now.elapsed());
+
+    let story_nodes = body_stories(stories);
 
     get_response(
         o(html::Html)
             .add_attr(("op", "news"))
             .add_attr(Lang::English)
-            .kid(head())
-            .kid(body(stories))
+            .kid(head("Hacker News".into(), true))
+            .kid(body(story_nodes))
             .kid(script()),
     )
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Item {
+    id: usize,
+}
+
+pub async fn comment_page(
+    Query(Item { id }): Query<Item>,
+    Extension(state): Extension<SharedState>,
+) -> Html<String> {
+    if let Some(story) = state.0.read().await.get(&id) {
+        let title = format!("{} | Hacker News", story.title);
+
+        let comment_nodes = body_comments(story.clone());
+
+        get_response(
+            o(html::Html)
+                .add_attr(("op", "item"))
+                .add_attr(Lang::English)
+                .kid(head(title, false))
+                .kid(body(comment_nodes))
+                .kid(script()),
+        )
+    } else {
+        format!("TODO error handle, missing id {id:?}").into()
+    }
 }

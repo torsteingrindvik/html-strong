@@ -1,4 +1,4 @@
-use crate::html::hacker_news;
+use crate::html::{comment_page, front_page};
 use crate::state::SharedState;
 use axum::{
     extract::Extension,
@@ -27,7 +27,8 @@ pub async fn run(ip: [u8; 4], port: u16) {
 
     // build our application with a route
     let app = Router::new()
-        .route("/", get(hacker_news))
+        .route("/", get(front_page))
+        .route("/item", get(comment_page))
         .route(
             "/favicon.ico",
             get_service(ServeFile::new("static/favicon.ico")).handle_error(internal_server_error),
