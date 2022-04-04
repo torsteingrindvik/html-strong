@@ -35,6 +35,44 @@ Create HTML dynamically using normal Rust control loops.
 
 ## Future efforts
 
+### Ergonomics
+
+Try finding improvements.
+
+Example:
+
+```rust
+o(Td::default())
+	.add_class("subtext")
+	.kid(score_span)
+	.add_text(" by ")
+	.kid(user_href)
+	.add_text(ONE_SPACE)
+	.kid(unv_span)
+	.add_text(PIPE_DELIMITER)
+	.kid(hide_a)
+	.add_text(PIPE_DELIMITER)
+```
+
+Would look better as:
+
+```rust
+o(Td
+	.class("subtext")
+	.kid(score_span)
+	.text(" by ")
+	.kid(user_href)
+	.text(ONE_SPACE)
+	.kid(unv_span)
+	.text(PIPE_DELIMITER)
+	.kid(hide_a)
+	.text(PIPE_DELIMITER)
+```
+
+All tag struct implement the `Tag` trait.
+
+If we use an extension trait, we should be able to make e.g. `class` available for any struct which implements `Tag`.
+
 ### Missing stuff
 
 Lots of tags and attributes are missing.

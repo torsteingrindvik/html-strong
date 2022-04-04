@@ -26,7 +26,13 @@ impl Attribute for Method {
 
 /// Url which processes the form.
 #[derive(Debug, Clone)]
-struct Action(String);
+pub struct Action(String);
+
+impl Action {
+    pub fn new<S: AsRef<str>>(action: S) -> Self {
+        Self(action.as_ref().to_owned())
+    }
+}
 
 impl Attribute for Action {
     fn name(&self) -> &'static str {

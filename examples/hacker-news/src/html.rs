@@ -10,8 +10,11 @@ use html_strong::{
     document_tree::{o, Node},
     global_attributes::Lang,
     tags::{
-        form, html, td::td, Body, Br, Div, Form, Head, Img, Input, Link, Meta, Script, Span, Table,
-        Td, Title, Tr, A, B,
+        form::{self, Method},
+        html,
+        td::td,
+        Body, Br, Div, Form, Head, Img, Input, Link, Meta, Script, Span, Table, Td, Textarea,
+        Title, Tr, A, B,
     },
 };
 use serde::Deserialize;
@@ -108,6 +111,31 @@ fn head(title: String, add_alternate: bool) -> Node {
 }
 
 fn body_comments(story: Story) -> Node {
+    let score_id = &format!("score_{}", story.id);
+    let unv_id = &format!("unv_{}", story.id);
+    let item_id = &format!("item?id={}", story.id);
+    let time_ago_href = o(A::href(item_id)).add_text(&story.time_ago());
+
+    let score_span = o(Span)
+        .add_class("score")
+        .set_id(score_id)
+        .add_text(&format!("{} points", story.score));
+
+    let user_href = o(A::href(&format!("user?id={}", story.by)))
+        .add_class("hnuser")
+        .add_text(&story.by);
+
+    let age_span = o(Span)
+        .add_class("age")
+        .set_title("2022-TODO")
+        .kid(time_ago_href);
+
+    let unv_span = o(Span).set_id(unv_id);
+    let hide_a = o(A::href("TODO")).add_text("hide");
+    let past_a = o(A::href("TODO")).add_class("hnpast").add_text("past");
+    let fav_a = o(A::href("TODO")).add_text("favorite");
+    let comments_a = o(A::href(item_id)).add_text(&format!("{} comments", story.descendants));
+
     let fatitem = o(Table)
         .add_class("fatitem")
         .kid(
@@ -121,20 +149,77 @@ fn body_comments(story: Story) -> Node {
                 )
                 .kid(
                     o(Td::default()).add_class("votelinks").kid(
-                        o(A::href("todo :)"))
-                            .set_id(&format!("up_{}", story.id))
-                            .kid(o(Div).add_class("votearrow").set_title("upvote")),
+                        o(A::href(&format!(
+                            "vote?id={}&amp;how=up&amp;goto=item%3Fid%3D{}",
+                            story.id, story.id
+                        )))
+                        .set_id(&format!("up_{}", story.id))
+                        .kid(o(Div).add_class("votearrow").set_title("upvote")),
                     ),
+                )
+                .kid(
+                    o(Td::default())
+                        .add_class("title")
+                        .kid(
+                            o(A::href(
+                                &story
+                                    .url
+                                    .map(|url| url.to_string())
+                                    .unwrap_or_else(|| "todo :-)".into()),
+                            ))
+                            .add_class("titlelink")
+                            .add_text(&story.text.unwrap_or_default()),
+                        )
+                        .kid(
+                            o(Span)
+                                .add_class("sitebit comhead")
+                                .add_text(" (")
+                                .kid(
+                                    o(A::href("from?site=todo"))
+                                        .kid(o(Span).add_class("sitestr").add_text("todo")),
+                                )
+                                .add_text(")"),
+                        ),
                 ),
         )
         .kid(
-            o(Tr)
-                .kid(o(Td::colspan(2)))
-                // TODO: Rest of this thing
-                .kid(o(Td::default()).add_class("subtext")),
+            o(Tr).kid(o(Td::colspan(2))).kid(
+                o(Td::default())
+                    .add_class("subtext")
+                    .kid(score_span)
+                    .add_text(" by ")
+                    .kid(user_href)
+                    .add_text(ONE_SPACE)
+                    .kid(age_span)
+                    .add_text(ONE_SPACE)
+                    .kid(unv_span)
+                    .add_text(PIPE_DELIMITER)
+                    .kid(hide_a)
+                    .add_text(PIPE_DELIMITER)
+                    .kid(past_a)
+                    .add_text(PIPE_DELIMITER)
+                    .kid(fav_a)
+                    .add_text(PIPE_DELIMITER)
+                    .kid(comments_a),
+            ),
+        )
+        .kid(o(Tr).add_style("height:10px"))
+        .kid(
+            o(Tr).kid(o(Td::colspan(2))).kid(
+                o(Td::default()).kid(
+                    o(Form::new(Method::Post, "comment"))
+                        .kid(Input::hidden("parent", &story.id.to_string()))
+                        .kid(Input::hidden("goto", &format!("item?id={}", story.id)))
+                        .kid(Input::hidden("hmac", "hmac-of-what?"))
+                        .kid(Textarea::new("text", 8, 80))
+                        .kid(Br)
+                        .kid(Br)
+                        .kid(Input::submit("add comment")),
+                ),
+            ),
         );
 
-    o(Tr).kid(o(td()).kid(fatitem))
+    o(Tr).kid(o(td()).kid(fatitem).kid(Br).kid(Br))
 }
 
 fn body_stories(stories: Vec<Story>) -> Node {
@@ -191,7 +276,7 @@ fn body_footer() -> Node {
 
     let search = o(Form::new(form::Method::Get, "//hn.algolia.com/"))
         .add_text("Search: ")
-        .kid(o(Input));
+        .kid(o(Input::text("q", "")));
 
     o(Tr).set_id("footer").kid(
         o(td())

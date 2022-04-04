@@ -19,3 +19,6 @@ pub mod document_tree;
 
 /// HTML document templates.
 pub mod template;
+
+/// Testing stuff
+pub mod science_lab;

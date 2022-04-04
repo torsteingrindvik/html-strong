@@ -2,79 +2,17 @@ use std::io;
 
 use crate::{
     global_attributes::{Attribute, Class, Id, Style, Title},
+    science_lab::NodeExt,
     tags::{invisible::Invisible, root::Root, Tag},
 };
-
-// use std::{collections::BTreeMap, path::Iter};
-
-// use crate::tags::{root::Root, Tag};
-
-/// A document tree.
-// pub struct DocumentTree {
-//     elements: BTreeMap<String, Box<dyn Tag>>,
-// }
-
-/// TODO
-// pub struct Node;
-
-// impl Node {
-//     fn child(self, node: Node) -> Self {
-//         self
-//     }
-
-//     fn children(self, nodes: Vec<Node>) -> Self {
-//         self
-//     }
-// }
-
-// fn node(name: &str) -> Node {
-//     Node
-// }
 
 #[derive(Debug, Clone)]
 pub struct Node {
     global_attributes: Vec<Box<dyn Attribute>>,
     tag: Box<dyn Tag>,
-    // id: Option<String>,
     text: Option<String>,
     children: Vec<Node>,
 }
-
-// Good reference for creating this type of iterator:
-// https://aloso.github.io/2021/03/09/creating-an-iterator
-//
-// This creates a depth first node iterator,
-// which is what we want for our HTML rendering.
-// pub struct NodeIter<'a> {
-//     children: &'a [Node],
-//     parent: Option<Box<NodeIter<'a>>>,
-// }
-
-// impl<'a> Iterator for NodeIter<'a> {
-//     type Item = &'a Node;
-
-//     fn next(&mut self) -> Option<Self::Item> {
-//         // Check if we have any children.
-//         match self.children.first() {
-//             // No children, then go on to our parent instead.
-//             None => match self.parent.take() {
-//                 // There is some parent, iterate further on that instead.
-//                 Some(node) => {
-//                     *self = *node;
-//                     self.next()
-//                 }
-//                 // No parent- we are done.
-//                 None => None,
-//             },
-//             // We
-//             Some(node) => {
-//                 self.children = &self.children[1..];
-//                 *self = node.iter();
-//                 self.next()
-//             }
-//         }
-//     }
-// }
 
 fn node(tag: impl Tag + 'static) -> Node {
     Node::new2(tag)
@@ -211,19 +149,27 @@ impl Node {
     }
 
     // Shorter version of child4.
+    // #[must_use]
+    // pub fn kid<K>(self, kid: K) -> Self
+    // where
+    //     K: Into<Self>,
+    // {
+    //     self.child4(kid)
+    // }
+
     #[must_use]
     pub fn kid<K>(self, kid: K) -> Self
     where
-        K: Into<Self>,
+        K: NodeExt,
     {
-        self.child4(kid)
+        self.child4(kid.into_node())
     }
 
     pub fn push_kid<K>(&mut self, kid: K)
     where
-        K: Into<Self>,
+        K: NodeExt,
     {
-        self.children.push(kid.into());
+        self.children.push(kid.into_node());
     }
 
     #[must_use]
@@ -287,53 +233,10 @@ impl Node {
 
     #[must_use]
     pub fn add_text(self, text: &str) -> Self {
-        let node: Self = Invisible.into();
+        let node: Self = Invisible.into_node();
         self.kid(node.set_text(text))
     }
 }
-
-// pub struct HtmlTree {
-//     nodes: Vec<Node>,
-// }
-
-// impl HtmlTree {
-//     pub fn new() -> Self {
-//         Self { nodes: vec![] }
-//     }
-
-//     pub fn push(&mut self, node: Node) {
-//         self.nodes.push(node);
-//     }
-// }
-
-/// TODO
-// pub struct Element {
-//     children: Vec<Element>,
-// }
-
-// impl Element {
-//     fn child(self, element: Element) -> Self {
-//         self.children.push(element);
-//         self
-//     }
-
-//     fn children(self, elements: Vec<Element>) -> Self {
-//         self.children.extend(elements);
-//         self
-//     }
-// }
-
-// impl Iterator for Element {
-//     type Item = Element;
-
-//     fn next(&mut self) -> Option<Self::Item> {
-//         todo!()
-//     }
-// }
-
-// fn el(element: &dyn Tag) -> Element {
-//     element.to_element()
-// }
 
 #[cfg(test)]
 mod tests {
@@ -489,33 +392,6 @@ mod tests {
             );
 
         render_to_file(&tree, "build_tree_v6");
-    }
-
-    #[test]
-    fn build_tree_v7() {
-        // Now we added `impl_into_node![...]` in `tags.rs`,
-        // so we _can_ use the same function for adding a Tag-like struct and a Node.
-
-        let tree = node(Body)
-            .child4(
-                node(Div)
-                    .child4(H1)
-                    .child4(P)
-                    .child4(node(P).child3(Em))
-                    .child4(Hr),
-            )
-            .child4(
-                node(Div).child4(
-                    node(Ul)
-                        .child4(Li)
-                        .child4(Li)
-                        .child4(Li)
-                        .child4(Li)
-                        .child4(Li),
-                ),
-            );
-
-        render_to_file(&tree, "build_tree_v7");
     }
 
     #[test]

@@ -4,6 +4,7 @@ use cached::proc_macro::cached;
 use chrono::{Local, TimeZone};
 use html_strong::{
     document_tree::{o, Node},
+    science_lab::NodeExt,
     tags::{td::td, Div, Span, Td, Tr, A},
 };
 use serde::Deserialize;
@@ -42,21 +43,23 @@ pub struct Story {
     pub rank: Option<usize>,
 }
 
-fn time(stamp: usize) -> String {
-    let now = chrono::Local::now();
-    let since = now - Local.timestamp(stamp as i64, 0);
+impl Story {
+    pub fn time_ago(&self) -> String {
+        let now = chrono::Local::now();
+        let since = now - Local.timestamp(self.time as i64, 0);
 
-    let mins = since.num_minutes();
-    let hours = since.num_hours();
+        let mins = since.num_minutes();
+        let hours = since.num_hours();
 
-    if hours == 1 {
-        "1 hour ago".to_string()
-    } else if hours > 1 {
-        format!("{} hours ago", hours)
-    } else if mins <= 1 {
-        "1 minute ago".to_string()
-    } else {
-        format!("{} minutes ago", mins)
+        if hours == 1 {
+            "1 hour ago".to_string()
+        } else if hours > 1 {
+            format!("{} hours ago", hours)
+        } else if mins <= 1 {
+            "1 minute ago".to_string()
+        } else {
+            format!("{} minutes ago", mins)
+        }
     }
 }
 
@@ -79,7 +82,7 @@ fn story(story: Story) -> Node {
             .add_text(&story.title),
     );
 
-    if let Some(url) = story.url {
+    if let Some(url) = &story.url {
         let url_long = url.to_string();
 
         // Get the short version of the domain in a best effort manner.
@@ -146,7 +149,7 @@ fn story(story: Story) -> Node {
                             .set_title("2022-03-28T16:35:29") // TODO: This thing
                             .kid(
                                 o(A::href(&format!("item?id={}", story.id)))
-                                    .add_text(&time(story.time)),
+                                    .add_text(&story.time_ago()),
                             ),
                     )
                     .kid(Span)
@@ -158,9 +161,8 @@ fn story(story: Story) -> Node {
         )
 }
 
-#[allow(clippy::from_over_into)]
-impl Into<Node> for Story {
-    fn into(self) -> Node {
+impl NodeExt for Story {
+    fn into_node(self) -> Node {
         Node::root().kid(story(self)).kid(spacer())
     }
 }

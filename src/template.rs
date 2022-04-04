@@ -46,7 +46,7 @@ impl HtmlDocumentBuilder {
 
     pub fn build(self) -> Node {
         let head = self.head.unwrap_or_else(head);
-        let body = self.body.unwrap_or_else(|| Body.into());
+        let body = self.body.unwrap_or_else(|| o(Body));
 
         Node::root()
             .kid(o(Doctype))
