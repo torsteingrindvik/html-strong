@@ -1,4 +1,5 @@
 use anyhow::Result;
+use cached::proc_macro::cached;
 use chrono::{TimeZone, Utc};
 use futures::{stream::FuturesOrdered, FutureExt, StreamExt, TryFutureExt};
 use reqwest::Url;
@@ -101,12 +102,12 @@ async fn item<T: DeserializeOwned>(id: usize) -> Result<T> {
     Ok(story_raw.json().await?)
 }
 
-// TODO: Cache
+#[cached(time = 600, result = true)]
 pub async fn story(id: usize) -> Result<ApiStory> {
     item(id).await
 }
 
-// TODO: Cache
+#[cached(size = 10000, result = true)]
 pub async fn comment(id: usize) -> Result<ApiComment> {
     item(id).await
 }
