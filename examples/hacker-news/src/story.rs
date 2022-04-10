@@ -1,7 +1,5 @@
-use crate::constants::*;
-
 use cached::proc_macro::cached;
-use chrono::{Local, TimeZone};
+use chrono::{DateTime, Local};
 use html_strong::{
     document_tree::{o, Node},
     science_lab::NodeExt,
@@ -10,57 +8,40 @@ use html_strong::{
 use serde::Deserialize;
 use url::Url;
 
+use crate::{
+    comment::Comment,
+    constants::{ONE_SPACE, PIPE_DELIMITER},
+    util::time_ago,
+};
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize)]
 pub struct Story {
     /// Author
-    pub by: String,
-
-    /// Number of comments
-    pub descendants: usize,
+    pub author: String,
 
     /// Story id
     pub id: usize,
 
     /// Story text, if any
-    pub text: Option<String>,
+    pub text: String,
 
     /// Comments
-    pub kids: Option<Vec<usize>>,
+    pub comments: Vec<Comment>,
 
     /// Upvotes
-    pub score: usize,
+    pub upvotes: usize,
 
-    /// Unix time
-    pub time: usize,
+    /// When it was submitted
+    pub submission_time: DateTime<Local>,
 
     /// Story title
     pub title: String,
 
-    /// Story url.
+    /// Story url, or nothing if there was no external story.
     pub url: Option<Url>,
 
     /// Not in JSON, will be set by us
     pub rank: Option<usize>,
-}
-
-impl Story {
-    pub fn time_ago(&self) -> String {
-        let now = chrono::Local::now();
-        let since = now - Local.timestamp(self.time as i64, 0);
-
-        let mins = since.num_minutes();
-        let hours = since.num_hours();
-
-        if hours == 1 {
-            "1 hour ago".to_string()
-        } else if hours > 1 {
-            format!("{} hours ago", hours)
-        } else if mins <= 1 {
-            "1 minute ago".to_string()
-        } else {
-            format!("{} minutes ago", mins)
-        }
-    }
 }
 
 #[cached]
@@ -104,10 +85,10 @@ fn story(story: Story) -> Node {
         );
     }
 
-    let comment_text = if story.descendants == 0 {
+    let comment_text = if story.comments.is_empty() {
         "discuss".into()
     } else {
-        format!("{} comments", story.descendants)
+        format!("{} comments", story.comments.len())
     };
 
     Node::root()
@@ -135,12 +116,12 @@ fn story(story: Story) -> Node {
             o(Tr).kid(Td::colspan(2)).kid(
                 o(td())
                     .add_class("subtext")
-                    .kid(o(Span).add_text(&format!("{} points", story.score)))
+                    .kid(o(Span).add_text(&format!("{} points", story.upvotes)))
                     .add_text(" by ")
                     .kid(
-                        o(A::href(&format!("user?id={}", story.by)))
+                        o(A::href(&format!("user?id={}", story.author)))
                             .add_class("hnuser")
-                            .add_text(&story.by)
+                            .add_text(&story.author)
                             .add_text(ONE_SPACE),
                     )
                     .kid(
@@ -149,7 +130,7 @@ fn story(story: Story) -> Node {
                             .set_title("2022-03-28T16:35:29") // TODO: This thing
                             .kid(
                                 o(A::href(&format!("item?id={}", story.id)))
-                                    .add_text(&story.time_ago()),
+                                    .add_text(&time_ago(story.submission_time)),
                             ),
                     )
                     .kid(Span)

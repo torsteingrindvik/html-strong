@@ -1,5 +1,6 @@
-use crate::state::SharedState;
 use crate::story::Story;
+use crate::util::time_ago;
+use crate::{comment::Comment, state::SharedState};
 
 use axum::{
     extract::{Extension, Query},
@@ -14,7 +15,7 @@ use html_strong::{
         html,
         td::td,
         Body, Br, Div, Form, Head, Img, Input, Link, Meta, Script, Span, Table, Td, Textarea,
-        Title, Tr, A, B,
+        Title, Tr, A, B, P, U,
     },
 };
 use serde::Deserialize;
@@ -110,20 +111,20 @@ fn head(title: String, add_alternate: bool) -> Node {
     head.kid(o(Title).add_text(&title))
 }
 
-fn body_comments(story: Story) -> Node {
+fn table_fatitem(story: &Story) -> Node {
     let score_id = &format!("score_{}", story.id);
     let unv_id = &format!("unv_{}", story.id);
     let item_id = &format!("item?id={}", story.id);
-    let time_ago_href = o(A::href(item_id)).add_text(&story.time_ago());
+    let time_ago_href = o(A::href(item_id)).add_text(&time_ago(story.submission_time));
 
     let score_span = o(Span)
         .add_class("score")
         .set_id(score_id)
-        .add_text(&format!("{} points", story.score));
+        .add_text(&format!("{} points", story.upvotes));
 
-    let user_href = o(A::href(&format!("user?id={}", story.by)))
+    let user_href = o(A::href(&format!("user?id={}", story.author)))
         .add_class("hnuser")
-        .add_text(&story.by);
+        .add_text(&story.author);
 
     let age_span = o(Span)
         .add_class("age")
@@ -134,9 +135,9 @@ fn body_comments(story: Story) -> Node {
     let hide_a = o(A::href("TODO")).add_text("hide");
     let past_a = o(A::href("TODO")).add_class("hnpast").add_text("past");
     let fav_a = o(A::href("TODO")).add_text("favorite");
-    let comments_a = o(A::href(item_id)).add_text(&format!("{} comments", story.descendants));
+    let comments_a = o(A::href(item_id)).add_text(&format!("{} comments", story.comments.len()));
 
-    let fatitem = o(Table)
+    o(Table)
         .add_class("fatitem")
         .kid(
             o(Tr)
@@ -164,11 +165,12 @@ fn body_comments(story: Story) -> Node {
                             o(A::href(
                                 &story
                                     .url
+                                    .as_ref()
                                     .map(|url| url.to_string())
                                     .unwrap_or_else(|| "todo :-)".into()),
                             ))
                             .add_class("titlelink")
-                            .add_text(&story.text.unwrap_or_default()),
+                            .add_text(&story.text),
                         )
                         .kid(
                             o(Span)
@@ -217,9 +219,125 @@ fn body_comments(story: Story) -> Node {
                         .kid(Input::submit("add comment")),
                 ),
             ),
-        );
+        )
+}
 
-    o(Tr).kid(o(td()).kid(fatitem).kid(Br).kid(Br))
+fn tr_comment(comment: &Comment) -> Node {
+    let id = &comment.id;
+
+    let td_ind = o(td()).add_class("ind").kid(Img::new_sized("s.gif", 0, 1)); // TODO: Add indent
+
+    let td_votelinks_a = o(A::href(&format!(
+        "vote?id={id}&amp;how=up&amp;goto=item%3Fid%3D{id}"
+    )))
+    .kid(o(Div).add_class("votearrow").set_title("upvote"));
+    let td_votelinks = o(td()).add_class("votelinks").kid(td_votelinks_a);
+
+    /*
+    All of this stuff:
+
+    <div style="margin-top:2px; margin-bottom:-10px;"><span class="comhead">
+            <a href="user?id=alecst" class="hnuser">alecst</a> <span class="age"
+                title="2022-04-03T14:31:13"><a href="item?id=30897201">6 minutes
+                    ago</a></span> <span id="unv_30897201"></span><span
+                class="navs"> | <a href="#30897156" class="clicky"
+                    aria-hidden="true">next</a></span> <a class="togg clicky"
+                id="30897201" n="1" href="javascript:void(0)">[–]</a><span
+                class="onstory"></span> </span></div>
+    */
+    let td_default_div_comhead = o(Div).kid(
+        o(Span)
+            .add_class("comhead")
+            .kid(
+                o(A::href(&format!("user?id={}", comment.author)))
+                    .add_class("hnuser")
+                    .add_text(&comment.author),
+            )
+            .kid(
+                o(Span)
+                    .add_class("age")
+                    .set_title(&comment.time.to_string())
+                    .kid(
+                        o(A::href(&format!("item?id={}", comment.id)))
+                            .add_text(&time_ago(comment.time)),
+                    ),
+            )
+            .kid(o(Span).set_id(&format!("unv_{}", comment.id)))
+            .kid(
+                o(Span).add_class("navs").add_text(PIPE_DELIMITER).kid(
+                    o(A::href(&format!("#{}", comment.id)))
+                        .add_class("clicky")
+                        .add_text("next"),
+                ), // TODO: aria-hidden
+            )
+            .kid(
+                o(A::href("javascript:void(0)"))
+                    .add_class("togg clicky")
+                    .set_id(&comment.id.to_string())
+                    .add_text("[-]"), // TODO: n="1", n="<number>", what does it do?
+            )
+            .kid(o(Span).add_class("onstory")),
+    );
+
+    /*
+    All of this stuff:
+
+    <div class="comment">
+        <span class="commtext c00">Actual text goes here
+        </span>
+        <div class='reply'>
+            <p>
+                <font size="1">
+                    <u><a
+                            href="reply?id=30897201&amp;goto=item%3Fid%3D30896661%2330897201">reply</a></u>
+                </font>
+        </div>
+    */
+    let td_default_div_comment = o(Div)
+        .kid(o(Span).add_class("commtext c00").add_text(&comment.text))
+        .kid(
+            o(Div)
+                .add_class("reply")
+                .kid(o(P).kid(o(U).kid(A::href("TODO")))),
+        ); // TODO: <font> is deprecated, add class.
+
+    let td_default = o(td())
+        .add_class("default")
+        .kid(td_default_div_comhead)
+        .kid(Br)
+        .kid(td_default_div_comment);
+
+    o(Tr)
+        .add_class("athing comtr")
+        .set_id(&comment.id.to_string())
+        .kid(
+            o(Td::default()).kid(o(Table).kid(o(Tr).kid(td_ind).kid(td_votelinks).kid(td_default))),
+        )
+}
+
+fn table_commen_tree(story: &Story) -> Node {
+    let mut table = o(Table).add_class("comment-tree");
+
+    for comment in &story.comments {
+        table.push_kid(tr_comment(comment));
+    }
+
+    table
+}
+
+fn body_comments(story: Story) -> Node {
+    let fatitem = table_fatitem(&story);
+    let comment_tree = table_commen_tree(&story);
+
+    o(Tr).kid(
+        o(td())
+            .kid(fatitem)
+            .kid(Br)
+            .kid(Br)
+            .kid(comment_tree)
+            .kid(Br)
+            .kid(Br),
+    )
 }
 
 fn body_stories(stories: Vec<Story>) -> Node {

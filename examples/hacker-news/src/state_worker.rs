@@ -1,6 +1,7 @@
 use crate::{hn_api, state::SharedState, story::Story};
 
 use anyhow::Result;
+use futures::TryFutureExt;
 use futures::{future, stream::FuturesOrdered, FutureExt, StreamExt};
 use std::time::{Duration, Instant};
 use tracing::{info, warn};
@@ -13,7 +14,11 @@ async fn get_stories() -> Result<Vec<Story>> {
     let mut futures = FuturesOrdered::new();
 
     for id in story_ids {
-        futures.push(hn_api::story(id).map(move |fut| (fut, id)));
+        futures.push(
+            hn_api::story(id)
+                .and_then(|api_story| api_story.try_into_story())
+                .map(move |story| (story, id)),
+        );
     }
 
     let now = Instant::now();

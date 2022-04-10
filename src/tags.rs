@@ -31,6 +31,7 @@ pub_mod_and_export![
     hr::Hr,
     li::Li,
     p::P,
+    u::U,
     ul::Ul,
     doctype::Doctype,
     head::Head,

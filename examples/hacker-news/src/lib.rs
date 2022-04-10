@@ -7,6 +7,10 @@ pub mod constants;
 /// The main bulk of the Hacker News HTML content.
 pub mod html;
 
+/// Extras.
+/// Like moving from a timestamp to the "x hours ago" / "y minutes ago" type text.
+pub mod util;
+
 /// Axum server related code.
 pub mod server;
 
@@ -15,6 +19,9 @@ pub mod state;
 
 /// Hacker News story definition.
 pub mod story;
+
+/// Hacker News comment definition.
+pub mod comment;
 
 /// Keeps the newest stories fresh in the background.
 pub mod state_worker;
