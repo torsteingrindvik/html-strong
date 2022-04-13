@@ -5,7 +5,7 @@ use html_strong::{
     science_lab::NodeExt,
     tags::{td::td, Div, Span, Td, Tr, A},
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use url::Url;
 
 use crate::{
@@ -14,7 +14,7 @@ use crate::{
     util::time_ago,
 };
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Story {
     /// Author
     pub author: String,

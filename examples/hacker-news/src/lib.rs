@@ -1,3 +1,6 @@
+/// The trait needed to be a frontend, and the frontends available.
+pub mod frontend;
+
 /// Usage of the Hacker News API.
 pub mod hn_api;
 

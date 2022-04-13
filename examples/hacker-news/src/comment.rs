@@ -1,9 +1,9 @@
 use chrono::{DateTime, Local, TimeZone, Utc};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::hn_api::ApiComment;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Comment {
     /// Author
     pub author: String,

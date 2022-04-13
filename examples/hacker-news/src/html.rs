@@ -18,7 +18,6 @@ use html_strong::{
         Title, Tr, A, B, P, U,
     },
 };
-use serde::Deserialize;
 use std::time::Instant;
 use tracing::debug;
 
@@ -439,13 +438,8 @@ pub async fn front_page(Extension(state): Extension<SharedState>) -> Html<String
     )
 }
 
-#[derive(Debug, Deserialize)]
-pub struct Item {
-    id: usize,
-}
-
 pub async fn comment_page(
-    Query(Item { id }): Query<Item>,
+    Query(id): Query<usize>,
     Extension(state): Extension<SharedState>,
 ) -> Html<String> {
     if let Some(story) = state.0.read().await.iter().find(|story| story.id == id) {

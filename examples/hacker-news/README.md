@@ -6,6 +6,12 @@ In general, the clone is very close to this.
 
 For HTML which uses deprecated attributes, a file with [extra css](static/news-extra.css) is used instead.
 
+### Extras
+
+Set env var `SAVE_STORIES` to make the background worker save the stories to `stories.json` every time it fetches new stories.
+
+Set env var `LOAD_STORIES` to use this same file to load stories from this file as well instead of doing network requests.
+
 ## How it works
 
 The HTML structure is generated when a GET request lands on the correct route (`/`) in the Axum server.

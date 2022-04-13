@@ -3,10 +3,35 @@ use crate::{hn_api, state::SharedState, story::Story};
 use anyhow::Result;
 use futures::TryFutureExt;
 use futures::{future, stream::FuturesOrdered, FutureExt, StreamExt};
+use std::env;
 use std::time::{Duration, Instant};
 use tracing::{debug, info, warn};
 
+fn read_from_disk() -> Result<Vec<Story>> {
+    debug!("Reading stories from disk");
+    let reader = std::fs::File::open("stories.json")?;
+    Ok(serde_json::from_reader(reader)?)
+}
+
+fn store_to_disk(stories: &[Story]) -> Result<()> {
+    debug!("Saving stories to disk");
+    let writer = std::fs::File::create("stories.json")?;
+    Ok(serde_json::to_writer_pretty(writer, stories)?)
+}
+
 async fn get_stories() -> Result<Vec<Story>> {
+    if env::var_os("LOAD_STORIES").is_some() {
+        if let Ok(stories) = read_from_disk() {
+            info!(
+                "Skipping network fetch- {} stories successfully read from disk",
+                stories.len()
+            );
+            return Ok(stories);
+        }
+        // If we fail to read from disk, do a normal network fetch.
+        // Assume it fails because it did not exist.
+    }
+
     let mut story_ids = hn_api::story_ids().await?;
     info!("Pulled {} story ids", story_ids.len());
     story_ids.truncate(30);
@@ -35,6 +60,10 @@ async fn get_stories() -> Result<Vec<Story>> {
         .await;
 
     info!("Stories resolved in {:?}", now.elapsed());
+
+    if env::var_os("SAVE_STORIES").is_some() && store_to_disk(&stories).is_err() {
+        warn!("Could not serialize stories")
+    }
 
     Ok(stories)
 }
