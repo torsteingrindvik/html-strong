@@ -1,17 +1,18 @@
-use crate::frontend::{self, Renderable};
-use crate::state::SharedState;
-use axum::extract::Query;
-use axum::response::Html;
+use crate::{
+    frontend::{self, Frontend, Renderable},
+    state::SharedState,
+};
 use axum::{
     extract::Extension,
     routing::{get, get_service},
     Router,
 };
+use axum::{extract::Query, response::Html};
+use axum_extra::extract::{cookie::Cookie, CookieJar};
 use html_strong::document_tree::Node;
 use reqwest::StatusCode;
 use serde::Deserialize;
-use std::net::SocketAddr;
-use std::time::Instant;
+use std::{borrow::Cow, net::SocketAddr, time::Instant};
 use tower::ServiceBuilder;
 use tower_http::{
     compression::CompressionLayer,
@@ -20,15 +21,38 @@ use tower_http::{
 };
 use tracing::debug;
 
-fn get_response(contents: Node) -> Html<String> {
+type Result = std::result::Result<(CookieJar, Html<String>), Cow<'static, str>>;
+
+fn get_response(contents: Node, jar: CookieJar) -> Result {
     let response = contents
         .render_string()
         .expect("Should render successfully");
 
-    Html(response)
+    Ok((jar, Html(response)))
 }
 
-async fn front_page(Extension(state): Extension<SharedState>) -> Html<String> {
+fn make_cookie(frontend: &Frontend) -> Cookie<'static> {
+    let mut cookie = Cookie::new(frontend::Frontend::COOKIE_NAME, frontend.to_string());
+    cookie.make_permanent();
+    cookie
+}
+
+fn get_frontend(jar: CookieJar) -> (frontend::Frontend, CookieJar) {
+    if let Some(choice) = jar
+        .get(frontend::Frontend::COOKIE_NAME)
+        .and_then(|cookie| cookie.value().try_into().ok())
+    {
+        debug!("User had stored frontend choice: {choice}");
+        (choice, jar)
+    } else {
+        let frontend = frontend::Frontend::default();
+        let jar = jar.add(make_cookie(&frontend));
+        debug!("User had no stored frontend choice, setting cookie with default: {frontend}");
+        (frontend, jar)
+    }
+}
+
+async fn front_page(Extension(state): Extension<SharedState>, jar: CookieJar) -> Result {
     let now = Instant::now();
     let stories = state.0.read().await.clone();
 
@@ -38,9 +62,8 @@ async fn front_page(Extension(state): Extension<SharedState>) -> Html<String> {
         debug!("Id: {} -> {}", story.id, story.title);
     }
 
-    let choice = frontend::Frontend::default();
-
-    get_response(choice.frontpage(stories))
+    let (frontend_choice, jar) = get_frontend(jar);
+    get_response(frontend_choice.frontpage(stories), jar)
 }
 
 #[derive(Debug, Deserialize)]
@@ -51,7 +74,8 @@ pub struct Item {
 async fn comment_page(
     Query(Item { id }): Query<Item>,
     Extension(state): Extension<SharedState>,
-) -> Html<String> {
+    jar: CookieJar,
+) -> Result {
     if let Some(story) = state
         .0
         .read()
@@ -60,10 +84,10 @@ async fn comment_page(
         .find(|story| story.id == id)
         .cloned()
     {
-        let choice = frontend::Frontend::default();
-        get_response(choice.comments(story))
+        let (frontend_choice, jar) = get_frontend(jar);
+        get_response(frontend_choice.comments(story), jar)
     } else {
-        format!("TODO error handle, missing id {id:?}").into()
+        Err(format!("No such story: {id}").into())
     }
 }
 

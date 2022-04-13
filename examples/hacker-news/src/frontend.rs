@@ -1,5 +1,8 @@
+use std::fmt::Display;
+
+use anyhow::anyhow;
+use axum_extra::extract::cookie::Cookie;
 use html_strong::document_tree::Node;
-use serde::{Deserialize, Serialize};
 
 use crate::story::Story;
 
@@ -19,10 +22,48 @@ pub trait Renderable {
 /// This choice is intended to be storied in a cookie.
 ///
 /// Defaults to a clone of the original frontend if no choice has been made.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
 pub enum Frontend {
     /// A close-ish clone of the original HackerNews frontend.
     Original,
+}
+
+impl Display for Frontend {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let name = match self {
+            Frontend::Original => "original",
+        };
+
+        write!(f, "{}", name)
+    }
+}
+
+impl TryFrom<&str> for Frontend {
+    type Error = anyhow::Error;
+
+    fn try_from(name: &str) -> Result<Self, Self::Error> {
+        match name {
+            "original" => Ok(Self::Original),
+            name => Err(anyhow!("Not a frontend name: {name}")),
+        }
+    }
+}
+
+impl Frontend {
+    pub const COOKIE_NAME: &'static str = "frontend-choice";
+}
+
+impl TryFrom<Cookie<'_>> for Frontend {
+    type Error = anyhow::Error;
+
+    fn try_from(cookie: Cookie) -> Result<Self, Self::Error> {
+        if cookie.name() != Frontend::COOKIE_NAME {
+            Err(anyhow!("Wrong cookie name for frontend choice"))
+        } else {
+            let frontend: Self = cookie.value().try_into()?;
+            Ok(frontend)
+        }
+    }
 }
 
 impl Default for Frontend {
