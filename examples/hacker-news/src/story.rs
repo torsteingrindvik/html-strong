@@ -40,8 +40,8 @@ pub struct Story {
     /// Story url, or nothing if there was no external story.
     pub url: Option<Url>,
 
-    /// Not in JSON, will be set by us
-    pub rank: Option<usize>,
+    /// Which position on the site (the number besides the upvote arrow)
+    pub rank: usize,
 }
 
 #[cached]
@@ -100,7 +100,7 @@ fn story(story: Story) -> Node {
                     o(td()).add_class("title-rank").kid(
                         o(Span)
                             .add_class("rank")
-                            .add_text(&format!("{}.", story.rank.expect("Must set rank"))),
+                            .add_text(&format!("{}.", story.rank)),
                     ),
                 )
                 .kid(

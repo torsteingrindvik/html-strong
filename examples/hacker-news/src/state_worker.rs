@@ -4,19 +4,19 @@ use anyhow::Result;
 use futures::TryFutureExt;
 use futures::{future, stream::FuturesOrdered, FutureExt, StreamExt};
 use std::time::{Duration, Instant};
-use tracing::{info, warn};
+use tracing::{debug, info, warn};
 
 async fn get_stories() -> Result<Vec<Story>> {
     let mut story_ids = hn_api::story_ids().await?;
     info!("Pulled {} story ids", story_ids.len());
-    story_ids.truncate(50);
+    story_ids.truncate(30);
 
     let mut futures = FuturesOrdered::new();
 
-    for id in story_ids {
+    for (rank, id) in story_ids.iter().enumerate() {
         futures.push(
-            hn_api::story(id)
-                .and_then(|api_story| api_story.try_into_story())
+            hn_api::story(*id)
+                .and_then(move |api_story| api_story.try_into_story(rank + 1)) // Want rank to be 1-indexed
                 .map(move |story| (story, id)),
         );
     }
@@ -30,6 +30,7 @@ async fn get_stories() -> Result<Vec<Story>> {
             }
         })
         .filter_map(|(fut, _)| future::ready(fut.ok()))
+        .inspect(|story| debug!("Id: {} -> {}", story.id, story.title))
         .collect::<Vec<_>>()
         .await;
 
@@ -51,7 +52,7 @@ pub async fn worker(state: SharedState) {
         };
 
         // Go from [Story] to [(usize, Story)], to create a mapping.
-        let stories = stories.into_iter().map(|story| (story.id, story)).collect();
+        // let stories = stories.into_iter().map(|story| (story.id, story)).collect();
 
         {
             let now = Instant::now();

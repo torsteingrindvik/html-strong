@@ -37,13 +37,10 @@ pub struct ApiStory {
 
     /// Story url.
     pub url: Option<Url>,
-
-    /// Not in JSON, will be set by us
-    pub rank: Option<usize>,
 }
 
 impl ApiStory {
-    pub async fn try_into_story(self) -> Result<Story> {
+    pub async fn try_into_story(self, rank: usize) -> Result<Story> {
         let comments: Vec<Comment> = resolve_comments(&self)
             .map(|api_comments| api_comments.into_iter().map(Into::into).collect())
             .await;
@@ -57,7 +54,7 @@ impl ApiStory {
             submission_time: Utc.timestamp(self.time as i64, 0).into(),
             title: self.title,
             url: self.url,
-            rank: None,
+            rank,
         })
     }
 }

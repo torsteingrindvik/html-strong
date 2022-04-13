@@ -1,7 +1,7 @@
-use std::collections::BTreeMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-/// A mapping between story ID and a story.
+/// The Hacker News stories.
+/// Updated at some time interval.
 #[derive(Debug, Default, Clone)]
-pub struct SharedState(pub Arc<RwLock<BTreeMap<usize, crate::story::Story>>>);
+pub struct SharedState(pub Arc<RwLock<Vec<crate::story::Story>>>);

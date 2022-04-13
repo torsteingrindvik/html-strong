@@ -137,6 +137,19 @@ fn table_fatitem(story: &Story) -> Node {
     let fav_a = o(A::href("TODO")).add_text("favorite");
     let comments_a = o(A::href(item_id)).add_text(&format!("{} comments", story.comments.len()));
 
+    let story_url = &story
+        .url
+        .as_ref()
+        .map(|url| url.to_string())
+        .unwrap_or_default();
+
+    // Get the short version of the domain in a best effort manner.
+    let url_short = story
+        .url
+        .as_ref()
+        .and_then(|url| url.domain().map(|url| url.to_owned()))
+        .unwrap_or_else(|| story_url.clone());
+
     o(Table)
         .add_class("fatitem")
         .kid(
@@ -162,15 +175,9 @@ fn table_fatitem(story: &Story) -> Node {
                     o(Td::default())
                         .add_class("title")
                         .kid(
-                            o(A::href(
-                                &story
-                                    .url
-                                    .as_ref()
-                                    .map(|url| url.to_string())
-                                    .unwrap_or_else(|| "todo :-)".into()),
-                            ))
-                            .add_class("titlelink")
-                            .add_text(&story.text),
+                            o(A::href(story_url))
+                                .add_class("titlelink")
+                                .add_text(&story.title),
                         )
                         .kid(
                             o(Span)
@@ -178,7 +185,7 @@ fn table_fatitem(story: &Story) -> Node {
                                 .add_text(" (")
                                 .kid(
                                     o(A::href("from?site=todo"))
-                                        .kid(o(Span).add_class("sitestr").add_text("todo")),
+                                        .kid(o(Span).add_class("sitestr").add_text(&url_short)),
                                 )
                                 .add_text(")"),
                         ),
@@ -343,8 +350,7 @@ fn body_comments(story: Story) -> Node {
 fn body_stories(stories: Vec<Story>) -> Node {
     let mut items = o(Table).add_class("itemlist");
 
-    for (rank, mut story) in stories.into_iter().enumerate() {
-        story.rank = Some(rank + 1);
+    for story in stories {
         items.push_kid(story)
     }
 
@@ -413,8 +419,13 @@ fn body_footer() -> Node {
 
 pub async fn front_page(Extension(state): Extension<SharedState>) -> Html<String> {
     let now = Instant::now();
-    let stories = state.0.read().await.values().cloned().collect();
+    let stories = state.0.read().await.clone();
+
     debug!("Stories acquired (held read lock for {:?})", now.elapsed());
+
+    for story in stories.iter().take(10) {
+        debug!("Id: {} -> {}", story.id, story.title);
+    }
 
     let story_nodes = body_stories(stories);
 
@@ -437,7 +448,7 @@ pub async fn comment_page(
     Query(Item { id }): Query<Item>,
     Extension(state): Extension<SharedState>,
 ) -> Html<String> {
-    if let Some(story) = state.0.read().await.get(&id) {
+    if let Some(story) = state.0.read().await.iter().find(|story| story.id == id) {
         let title = format!("{} | Hacker News", story.title);
 
         let comment_nodes = body_comments(story.clone());
