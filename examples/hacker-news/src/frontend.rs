@@ -9,10 +9,10 @@ mod original;
 /// A frontend must simply be able to consume a vector of stories and turn that into HTML.
 pub trait Renderable {
     /// Render the full frontpage using the provided stories.
-    fn frontpage(stories: Vec<Story>) -> Node;
+    fn frontpage(&self, stories: Vec<Story>) -> Node;
 
     /// Render the comment page for the given story.
-    fn comments(story: Story) -> Node;
+    fn comments(&self, story: Story) -> Node;
 }
 
 /// The choice of frontend to use.
@@ -31,9 +31,16 @@ impl Default for Frontend {
     }
 }
 
-/// Render stories using the given frontend choice.
-pub fn render_frontend(frontend: Frontend, stories: Vec<Story>) -> Node {
-    match frontend {
-        Frontend::Original => original::Original::frontpage(stories),
+impl Renderable for Frontend {
+    fn frontpage(&self, stories: Vec<Story>) -> Node {
+        match self {
+            Frontend::Original => original::Original.frontpage(stories),
+        }
+    }
+
+    fn comments(&self, story: Story) -> Node {
+        match self {
+            Frontend::Original => original::Original.comments(story),
+        }
     }
 }

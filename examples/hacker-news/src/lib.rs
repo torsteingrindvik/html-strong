@@ -7,9 +7,6 @@ pub mod hn_api;
 /// Constants inserted into HTML.
 pub mod constants;
 
-/// The main bulk of the Hacker News HTML content.
-pub mod html;
-
 /// Extras.
 /// Like moving from a timestamp to the "x hours ago" / "y minutes ago" type text.
 pub mod util;

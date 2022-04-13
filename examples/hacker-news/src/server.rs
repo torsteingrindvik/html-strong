@@ -1,18 +1,71 @@
-use crate::html::{comment_page, front_page};
+use crate::frontend::{self, Renderable};
 use crate::state::SharedState;
+use axum::extract::Query;
+use axum::response::Html;
 use axum::{
     extract::Extension,
     routing::{get, get_service},
     Router,
 };
+use html_strong::document_tree::Node;
 use reqwest::StatusCode;
+use serde::Deserialize;
 use std::net::SocketAddr;
+use std::time::Instant;
 use tower::ServiceBuilder;
 use tower_http::{
     compression::CompressionLayer,
     services::{ServeDir, ServeFile},
     trace::TraceLayer,
 };
+use tracing::debug;
+
+fn get_response(contents: Node) -> Html<String> {
+    let response = contents
+        .render_string()
+        .expect("Should render successfully");
+
+    Html(response)
+}
+
+async fn front_page(Extension(state): Extension<SharedState>) -> Html<String> {
+    let now = Instant::now();
+    let stories = state.0.read().await.clone();
+
+    debug!("Stories acquired (held read lock for {:?})", now.elapsed());
+
+    for story in stories.iter().take(10) {
+        debug!("Id: {} -> {}", story.id, story.title);
+    }
+
+    let choice = frontend::Frontend::default();
+
+    get_response(choice.frontpage(stories))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Item {
+    id: usize,
+}
+
+async fn comment_page(
+    Query(Item { id }): Query<Item>,
+    Extension(state): Extension<SharedState>,
+) -> Html<String> {
+    if let Some(story) = state
+        .0
+        .read()
+        .await
+        .iter()
+        .find(|story| story.id == id)
+        .cloned()
+    {
+        let choice = frontend::Frontend::default();
+        get_response(choice.comments(story))
+    } else {
+        format!("TODO error handle, missing id {id:?}").into()
+    }
+}
 
 async fn internal_server_error(error: std::io::Error) -> (StatusCode, String) {
     (
