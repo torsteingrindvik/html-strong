@@ -38,10 +38,11 @@ fn make_cookie(frontend: &Frontend) -> Cookie<'static> {
 }
 
 fn get_frontend(jar: CookieJar) -> (frontend::Frontend, CookieJar) {
-    if let Some(choice) = jar
-        .get(frontend::Frontend::COOKIE_NAME)
-        .and_then(|cookie| cookie.value().try_into().ok())
-    {
+    if let Some(choice) = jar.get(frontend::Frontend::COOKIE_NAME).and_then(|cookie| {
+        let to_choice = cookie.value().try_into();
+        debug!("Result of turning cooke into choice: {to_choice:?}");
+        to_choice.ok()
+    }) {
         debug!("User had stored frontend choice: {choice}");
         (choice, jar)
     } else {

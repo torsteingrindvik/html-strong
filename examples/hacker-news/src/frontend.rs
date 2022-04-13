@@ -9,6 +9,9 @@ use crate::story::Story;
 /// Clone of the original Hacker News frontend.
 mod original;
 
+/// An extremely simple plaintext frontend.
+mod plain;
+
 /// A frontend must simply be able to consume a vector of stories and turn that into HTML.
 pub trait Renderable {
     /// Render the full frontpage using the provided stories.
@@ -26,12 +29,16 @@ pub trait Renderable {
 pub enum Frontend {
     /// A close-ish clone of the original HackerNews frontend.
     Original,
+
+    /// A very plain frontend.
+    Plain,
 }
 
 impl Display for Frontend {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let name = match self {
             Frontend::Original => "original",
+            Frontend::Plain => "plain",
         };
 
         write!(f, "{}", name)
@@ -44,6 +51,7 @@ impl TryFrom<&str> for Frontend {
     fn try_from(name: &str) -> Result<Self, Self::Error> {
         match name {
             "original" => Ok(Self::Original),
+            "plain" => Ok(Self::Plain),
             name => Err(anyhow!("Not a frontend name: {name}")),
         }
     }
@@ -76,12 +84,14 @@ impl Renderable for Frontend {
     fn frontpage(&self, stories: Vec<Story>) -> Node {
         match self {
             Frontend::Original => original::Original.frontpage(stories),
+            Frontend::Plain => plain::Plain.frontpage(stories),
         }
     }
 
     fn comments(&self, story: Story) -> Node {
         match self {
             Frontend::Original => original::Original.comments(story),
+            Frontend::Plain => plain::Plain.comments(story),
         }
     }
 }
