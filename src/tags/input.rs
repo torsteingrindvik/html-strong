@@ -7,6 +7,7 @@ enum InputType {
     Hidden,
     Submit,
     Text,
+    Radio,
 }
 
 impl Attribute for InputType {
@@ -19,6 +20,7 @@ impl Attribute for InputType {
             InputType::Hidden => "hidden",
             InputType::Submit => "submit",
             InputType::Text => "text",
+            InputType::Radio => "radio",
         }
         .to_string()
     }
@@ -50,11 +52,25 @@ impl Attribute for Value {
     }
 }
 
+#[derive(Debug, Clone)]
+struct Checked;
+
+impl Attribute for Checked {
+    fn name(&self) -> &'static str {
+        "checked"
+    }
+
+    fn value(&self) -> String {
+        "".into()
+    }
+}
+
 /// Input.
 #[derive(Debug, Clone)]
 pub struct Input {
     type_: InputType,
     name: Option<Name>,
+    checked: Option<Checked>,
     value: Value,
     // TODO: Missing stuff:
     //  * size
@@ -71,6 +87,7 @@ impl Input {
             type_: InputType::Text,
             name: Some(Name(name.to_string())),
             value: Value(value.to_string()),
+            checked: None,
         }
     }
 
@@ -80,6 +97,7 @@ impl Input {
             type_: InputType::Hidden,
             name: Some(Name(name.to_string())),
             value: Value(value.to_string()),
+            checked: None,
         }
     }
 
@@ -89,7 +107,25 @@ impl Input {
             type_: InputType::Submit,
             name: None,
             value: Value(value.to_string()),
+            checked: None,
         }
+    }
+
+    /// The value of this radio input element,
+    /// and the name of the group it belongs to.
+    #[must_use]
+    pub fn radio(value: &str, name: &str) -> Self {
+        Self {
+            type_: InputType::Radio,
+            name: Some(Name(name.to_string())),
+            value: Value(value.to_string()),
+            checked: None,
+        }
+    }
+
+    /// Make this input have the `checked` attribute.
+    pub fn set_checked(&mut self) {
+        self.checked = Some(Checked);
     }
 }
 
@@ -103,6 +139,10 @@ impl Tag for Input {
 
         if let Some(name) = &self.name {
             attrs.push(name);
+        }
+
+        if let Some(checked) = &self.checked {
+            attrs.push(checked);
         }
 
         attrs.push(&self.value);

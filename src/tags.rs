@@ -47,7 +47,9 @@ pub_mod_and_export![
     input::Input,
     script::Script,
     span::Span,
-    textarea::Textarea
+    textarea::Textarea,
+    label::Label,
+    button::Button
 ];
 
 crate_mod![invisible::Invisible, root::Root];

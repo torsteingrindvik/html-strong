@@ -1,18 +1,19 @@
 use crate::{
     frontend::{self, Frontend, Renderable},
+    settings::Settings,
     state::SharedState,
 };
 use axum::{
-    extract::Extension,
+    extract::{Extension, Form, Query},
+    response::{Html, IntoResponse, Redirect},
     routing::{get, get_service},
     Router,
 };
-use axum::{extract::Query, response::Html};
 use axum_extra::extract::{cookie::Cookie, CookieJar};
 use html_strong::document_tree::Node;
 use reqwest::StatusCode;
 use serde::Deserialize;
-use std::{borrow::Cow, net::SocketAddr, time::Instant};
+use std::{borrow::Cow, convert::Infallible, net::SocketAddr, time::Instant};
 use tower::ServiceBuilder;
 use tower_http::{
     compression::CompressionLayer,
@@ -92,6 +93,30 @@ async fn comment_page(
     }
 }
 
+async fn settings_page(jar: CookieJar) -> Result {
+    let (current_choice, jar) = get_frontend(jar);
+    let settings = Settings::new_with_options("choice", Frontend::as_options(current_choice));
+
+    get_response(settings.into_page(), jar)
+}
+
+#[derive(Deserialize, Debug)]
+#[allow(dead_code)]
+struct Input {
+    choice: String,
+}
+
+async fn settings_post(jar: CookieJar, Form(Input { choice }): Form<Input>) -> impl IntoResponse {
+    let jar = if let Ok(frontend) = choice.as_str().try_into() {
+        let cookie = make_cookie(&frontend);
+        jar.add(cookie)
+    } else {
+        jar
+    };
+
+    std::result::Result::<_, Infallible>::Ok((jar, Redirect::to("/")))
+}
+
 async fn internal_server_error(error: std::io::Error) -> (StatusCode, String) {
     (
         StatusCode::INTERNAL_SERVER_ERROR,
@@ -107,6 +132,7 @@ pub async fn run(ip: [u8; 4], port: u16) {
     let app = Router::new()
         .route("/", get(front_page))
         .route("/item", get(comment_page))
+        .route("/settings", get(settings_page).post(settings_post))
         .route(
             "/favicon.ico",
             get_service(ServeFile::new("static/favicon.ico")).handle_error(internal_server_error),

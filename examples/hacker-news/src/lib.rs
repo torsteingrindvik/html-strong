@@ -25,3 +25,6 @@ pub mod comment;
 
 /// Keeps the newest stories fresh in the background.
 pub mod state_worker;
+
+/// User settings page.
+pub mod settings;

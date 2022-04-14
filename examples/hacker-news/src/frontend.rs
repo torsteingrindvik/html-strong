@@ -4,6 +4,7 @@ use anyhow::anyhow;
 use axum_extra::extract::cookie::Cookie;
 use html_strong::document_tree::Node;
 
+use crate::settings;
 use crate::story::Story;
 
 /// Clone of the original Hacker News frontend.
@@ -25,13 +26,30 @@ pub trait Renderable {
 /// This choice is intended to be storied in a cookie.
 ///
 /// Defaults to a clone of the original frontend if no choice has been made.
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Frontend {
     /// A close-ish clone of the original HackerNews frontend.
     Original,
 
     /// A very plain frontend.
     Plain,
+}
+
+impl Frontend {
+    pub fn as_options(current_choice: Frontend) -> Vec<settings::Option> {
+        vec![
+            settings::Option::new(
+                "Original",
+                "A clone of the original Hacker News frontpage.",
+                current_choice == Frontend::Original,
+            ),
+            settings::Option::new(
+                "Plain",
+                "An extremely simple plaintext version.",
+                current_choice == Frontend::Plain,
+            ),
+        ]
+    }
 }
 
 impl Display for Frontend {
