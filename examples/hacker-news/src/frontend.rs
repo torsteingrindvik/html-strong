@@ -13,6 +13,12 @@ mod original;
 /// An extremely simple plaintext frontend.
 mod plain;
 
+/// Happy colors!
+/// See [this](https://codepen.io/ericmahoney/pen/oNLMOYw) codepen,
+/// posted by user `ericmahoney`.
+/// Design credited to [Simon Lürwer](https://dribbble.com/shots/14101951-Banners).
+mod candy;
+
 /// A frontend must simply be able to consume a vector of stories and turn that into HTML.
 pub trait Renderable {
     /// Render the full frontpage using the provided stories.
@@ -28,11 +34,14 @@ pub trait Renderable {
 /// Defaults to a clone of the original frontend if no choice has been made.
 #[derive(Debug, PartialEq, Eq)]
 pub enum Frontend {
-    /// A close-ish clone of the original HackerNews frontend.
+    /// The original frontend.
     Original,
 
-    /// A very plain frontend.
+    /// The plain frontend.
     Plain,
+
+    /// The colorful frontend.
+    Candy,
 }
 
 impl Frontend {
@@ -40,13 +49,18 @@ impl Frontend {
         vec![
             settings::Option::new(
                 "Original",
-                "A clone of the original Hacker News frontpage.",
+                "A clone of the original Hacker News frontpage",
                 current_choice == Frontend::Original,
             ),
             settings::Option::new(
                 "Plain",
-                "An extremely simple plaintext version.",
+                "An extremely simple plaintext version",
                 current_choice == Frontend::Plain,
+            ),
+            settings::Option::new(
+                "Candy",
+                "A colorful variant",
+                current_choice == Frontend::Candy,
             ),
         ]
     }
@@ -57,6 +71,7 @@ impl Display for Frontend {
         let name = match self {
             Frontend::Original => "original",
             Frontend::Plain => "plain",
+            Frontend::Candy => "candy",
         };
 
         write!(f, "{}", name)
@@ -70,6 +85,7 @@ impl TryFrom<&str> for Frontend {
         match name {
             "original" => Ok(Self::Original),
             "plain" => Ok(Self::Plain),
+            "candy" => Ok(Self::Candy),
             name => Err(anyhow!("Not a frontend name: {name}")),
         }
     }
@@ -103,6 +119,7 @@ impl Renderable for Frontend {
         match self {
             Frontend::Original => original::Original.frontpage(stories),
             Frontend::Plain => plain::Plain.frontpage(stories),
+            Frontend::Candy => candy::Candy.frontpage(stories),
         }
     }
 
@@ -110,6 +127,7 @@ impl Renderable for Frontend {
         match self {
             Frontend::Original => original::Original.comments(story),
             Frontend::Plain => plain::Plain.comments(story),
+            Frontend::Candy => candy::Candy.comments(story),
         }
     }
 }

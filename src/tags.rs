@@ -28,6 +28,7 @@ pub_mod_and_export![
     div::Div,
     em::Em,
     h1::H1,
+    h2::H2,
     hr::Hr,
     li::Li,
     p::P,
@@ -49,7 +50,8 @@ pub_mod_and_export![
     span::Span,
     textarea::Textarea,
     label::Label,
-    button::Button
+    button::Button,
+    i::I
 ];
 
 crate_mod![invisible::Invisible, root::Root];
