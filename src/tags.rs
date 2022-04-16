@@ -1,107 +1,26 @@
-// use std::io;
-// use crate::document_tree::Node;
+use crate::global_attributes::Attribute;
+use dyn_clonable::clonable;
+use std::fmt;
 
-// /// Hyperlink
-// pub mod a;
-// /// Body
-// pub mod body;
-// /// Div
-// pub mod div;
-// /// Document type.
-// pub mod doctype;
-// /// Em
-// pub mod em;
-// /// H1
-// pub mod h1;
-// /// Header section.
-// pub mod head;
-// /// HR
-// pub mod hr;
-// /// Html tag declaration.
-// pub mod html;
-// /// Li
-// pub mod li;
-// /// Link tag typically found in header.
-// pub mod link;
-// /// Meta tag typically found in header.
-// pub mod meta;
-// /// P
-// pub mod p;
-// /// Ul
-// pub mod ul;
-// /// Title
-// pub mod title;
-// /// Center
-// pub mod center;
-// /// Table row
-// pub mod tr;
-
-////////////////////////////////////////////////////////////////////////////////
-/// Re-exports
-// pub use a::A;
-// pub use body::Body;
-// pub use div::Div;
-// pub use doctype::Doctype;
-// pub use em::Em;
-// pub use h1::H1;
-// pub use head::Head;
-// pub use hr::Hr;
-// pub use html::Html;
-// pub use li::Li;
-// pub use link::Link;
-// pub use meta::Meta;
-// pub use p::P;
-// pub use ul::Ul;
-// pub use title::Title;
-////////////////////////////////////////////////////////////////////////////////
-
-/// The empty root node.
-// pub(crate) mod root;
-
-/// Tagless node.
-// pub(crate) mod invisible;
-
-////////////////////////////////////////////////////////////////////////////////
-// We cannot create a blanket impl of Into<Node> for any struct that implements
-// the Tag trait, so to avoid repetition we create a macro for doing it
-// manually.
-//
-// Also we `pub use` it.
-use crate::{document_tree::Node, global_attributes::Attribute};
-
-macro_rules! decl_mod_impl_into_node_pub_use {
+macro_rules! pub_mod_and_export {
     ( $( $pre:ident::$post:ident ),* ) => {
         $(
             pub mod $pre;
-
-            #[allow(clippy::from_over_into)]
-            impl Into<Node> for $pre::$post {
-                fn into(self) -> Node {
-                    Node::new(Box::new(self))
-                }
-            }
 
             pub use $pre::$post;
         )*
     };
 }
 
-macro_rules! impl_into_node_and_export_priv {
+macro_rules! crate_mod {
     ( $( $pre:ident::$post:ident ),* ) => {
         $(
             pub(crate) mod $pre;
-
-            #[allow(clippy::from_over_into)]
-            impl Into<Node> for $pre::$post {
-                fn into(self) -> Node {
-                    Node::new(Box::new(self))
-                }
-            }
         )*
     };
 }
 
-decl_mod_impl_into_node_pub_use![
+pub_mod_and_export![
     a::A,
     b::B,
     br::Br,
@@ -109,9 +28,11 @@ decl_mod_impl_into_node_pub_use![
     div::Div,
     em::Em,
     h1::H1,
+    h2::H2,
     hr::Hr,
     li::Li,
     p::P,
+    u::U,
     ul::Ul,
     doctype::Doctype,
     head::Head,
@@ -126,15 +47,23 @@ decl_mod_impl_into_node_pub_use![
     form::Form,
     input::Input,
     script::Script,
-    span::Span
+    span::Span,
+    textarea::Textarea,
+    label::Label,
+    button::Button,
+    i::I,
+    blockquote::Blockquote,
+    pre::Pre,
+    code::Code
 ];
 
-impl_into_node_and_export_priv![invisible::Invisible, root::Root];
+crate_mod![invisible::Invisible, root::Root];
 
 ////////////////////////////////////////////////////////////////////////////////
 
 /// An HTML tag.
-pub trait Tag {
+#[clonable]
+pub trait Tag: Send + fmt::Debug + Clone {
     /// The tag's name.
     fn name(&self) -> &'static str;
 

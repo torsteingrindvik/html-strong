@@ -1,6 +1,6 @@
 use super::Attribute;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Id(String);
 
 impl Id {

@@ -2,6 +2,7 @@ use crate::global_attributes::Attribute;
 
 use super::{link::Href, Tag};
 
+#[derive(Debug, Clone)]
 pub enum Target {
     Blank,
     Parent,
@@ -26,6 +27,7 @@ impl Attribute for Target {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct A {
     href: Option<Href>,
     target: Option<Target>,
@@ -105,22 +107,24 @@ mod tests {
         let a2 = |href| o(A::href(href)).add_text(href);
         let spacer = " | ";
 
-        let td_links = o(Td).add_style("line-height:12pt; height:10px;").kid(
-            o(Span)
-                .add_class("pagetop")
-                .kid(o(B).add_class("hnname").kid(a("news", "Hacker News")))
-                .kid(a("newest", "new"))
-                .add_text(spacer)
-                .kid(a("newcomments", "comments"))
-                .add_text(spacer)
-                .kid(a2("ask"))
-                .add_text(spacer)
-                .kid(a2("show"))
-                .add_text(spacer)
-                .kid(a2("jobs"))
-                .add_text(spacer)
-                .kid(a2("submit")),
-        );
+        let td_links = o(Td::default())
+            .add_style("line-height:12pt; height:10px;")
+            .kid(
+                o(Span)
+                    .add_class("pagetop")
+                    .kid(o(B).add_class("hnname").kid(a("news", "Hacker News")))
+                    .kid(a("newest", "new"))
+                    .add_text(spacer)
+                    .kid(a("newcomments", "comments"))
+                    .add_text(spacer)
+                    .kid(a2("ask"))
+                    .add_text(spacer)
+                    .kid(a2("show"))
+                    .add_text(spacer)
+                    .kid(a2("jobs"))
+                    .add_text(spacer)
+                    .kid(a2("submit")),
+            );
         let expected = r#"<a href="https://www.w3schools.com">Visit W3Schools.com!</a>"#;
         let result = td_links.render_string().unwrap();
 

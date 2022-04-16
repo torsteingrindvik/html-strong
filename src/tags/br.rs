@@ -1,6 +1,7 @@
 use super::Tag;
 
 /// Br.
+#[derive(Debug, Clone)]
 pub struct Br;
 
 impl Tag for Br {

@@ -12,10 +12,7 @@ pub struct HtmlDocumentBuilder {
 /// Default contents inspired by [w3schools](https://www.w3schools.com/TAgs/tag_meta.asp).
 #[must_use]
 pub fn head() -> Node {
-    o(Head)
-        .kid(Meta::charset_utf8())
-        .kid(Meta::viewport_sane())
-        .kid(Meta::refresh(5))
+    o(Head).kid(Meta::charset_utf8()).kid(Meta::viewport_sane())
 }
 
 /// Builds a simple HTML document,
@@ -46,7 +43,7 @@ impl HtmlDocumentBuilder {
 
     pub fn build(self) -> Node {
         let head = self.head.unwrap_or_else(head);
-        let body = self.body.unwrap_or_else(|| Body.into());
+        let body = self.body.unwrap_or_else(|| o(Body));
 
         Node::root()
             .kid(o(Doctype))

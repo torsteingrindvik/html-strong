@@ -1,6 +1,7 @@
 use super::Tag;
 
 /// Title tag.
+#[derive(Debug, Clone)]
 pub struct Title;
 
 impl Tag for Title {
