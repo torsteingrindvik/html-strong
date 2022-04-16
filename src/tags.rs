@@ -51,7 +51,10 @@ pub_mod_and_export![
     textarea::Textarea,
     label::Label,
     button::Button,
-    i::I
+    i::I,
+    blockquote::Blockquote,
+    pre::Pre,
+    code::Code
 ];
 
 crate_mod![invisible::Invisible, root::Root];

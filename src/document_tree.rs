@@ -227,7 +227,7 @@ impl Node {
 
     /// Get a reference to the node's text.
     #[must_use]
-    pub const fn text(&self) -> Option<&String> {
+    const fn text(&self) -> Option<&String> {
         self.text.as_ref()
     }
 

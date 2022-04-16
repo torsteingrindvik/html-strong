@@ -26,10 +26,8 @@ The server replies to clients by combining the cached static parts and the dynam
 
 ## TODO
 
-* Comments page
-* Use the cached crate on the shared state with a timeout.
-* Decide on what we want to do with style inlined into the HTML.
-  * Move it as well to CSS?
+* Recursive comments
+* This theme: https://codepen.io/pieter-biesemans/pen/QWKmXEE
 
 ## Probably won't do
 

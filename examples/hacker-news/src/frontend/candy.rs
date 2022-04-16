@@ -1,7 +1,5 @@
 use cached::proc_macro::cached;
-use html_strong::document_tree::{o, Node};
-use html_strong::tags::*;
-use html_strong::template;
+use html_strong::{document_tree::Node, science_lab::NodeExt, tags::*, template};
 
 use crate::story::Story;
 
@@ -46,39 +44,47 @@ https://dribbble.com/shots/14101951-Banners
 
 #[cached]
 fn candy_story(story: Story, class: String) -> Node {
-    let outer = o(Div).add_class(&format!("card {class}"));
+    let outer = Div.class(format!("card {class}"));
+    let icon = Div.class("card__icon").kid(I.class("fas fa-bolt"));
+    let exit = P.class("card__exit").kid(I.class("fas fa-times"));
+    let title = H2.class("card__title").text(story.title);
 
-    let icon = o(Div)
-        .add_class("card__icon")
-        .kid(o(I).add_class("fas fa-bolt"));
-
-    let exit = o(P)
-        .add_class("card__exit")
-        .kid(o(I).add_class("fas fa-times"));
-
-    let title = o(H2).add_class("card__title").add_text(&story.title);
-
-    let apply = o(P).add_class("card__apply").kid(
-        o(A::href("#"))
-            .add_class("card__link")
-            .add_text("Idk go to the comments?")
-            .kid(o(I).add_class("fas fa-arrow-right")),
+    let apply = P.class("card__apply").kid(
+        A::href("#")
+            .class("card__link")
+            .text("Idk go to the comments?")
+            .kid(I.class("fas fa-arrow-right")),
     );
 
     outer.kid(icon).kid(exit).kid(title).kid(apply)
-    // outer.kid(icon).kid(title).kid(apply)
+}
+
+#[cached]
+fn candy_story2(story: Story, class: String) -> Node {
+    Div.class(format!("card {class}"))
+        .kid(Div.class("card__icon").kid(I.class("fas fa-bolt")))
+        .kid(P.class("card__exit").kid(I.class("fas fa-times")))
+        .kid(H2.class("card__title").text(story.title))
+        .kid(
+            P.class("card__apply").kid(
+                A::href("#")
+                    .class("card__link")
+                    .text("Idk go to the comments?")
+                    .kid(I.class("fas fa-arrow-right")),
+            ),
+        )
 }
 
 impl Renderable for Candy {
     fn frontpage(&self, stories: Vec<Story>) -> Node {
-        let mut cards = o(Div).add_class("cards");
+        let mut cards = Div.class("cards");
 
         for (index, story) in stories.into_iter().enumerate() {
             // The CSS defines card-0 through card-4, which decides colors.
             cards.push_kid(candy_story(story, format!("card-{}", index % 5)));
         }
 
-        let body = o(Body).kid(o(Div).add_class("main-container").kid(cards));
+        let body = Body.kid(Div.class("main-container").kid(cards));
         let head = template::head()
             .kid(Link::stylesheet(mime::TEXT_CSS, "/static/candy.css"))
             .kid(Link::stylesheet(

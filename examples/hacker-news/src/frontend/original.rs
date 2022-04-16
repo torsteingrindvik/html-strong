@@ -10,6 +10,7 @@ use cached::proc_macro::cached;
 use html_strong::{
     document_tree::{o, Node},
     global_attributes::Lang,
+    science_lab::NodeExt,
     tags::{
         form::{self, Method},
         html,
@@ -23,63 +24,56 @@ use tracing::debug;
 use crate::constants::*;
 
 fn a(href: &str, text: &str) -> Node {
-    o(A::href(href)).add_text(text)
+    A::href(href).text(text)
 }
 
 fn a2(href_text: &str) -> Node {
-    o(A::href(href_text)).add_text(href_text)
+    A::href(href_text).text(href_text)
 }
 
 #[cached]
 fn body_nav() -> Node {
-    let td_logo = o(td())
-        .add_style("width:18px;padding-right:4px;")
-        .kid(o(A::href("https://news.ycombinator.com")).kid(
-            o(Img::new_sized("/static/y18.gif", 18, 18)).add_style("border:1px white solid;"),
-        ));
+    let td_logo = td().style("width:18px;padding-right:4px;").kid(
+        A::href("https://news.ycombinator.com")
+            .kid(Img::new_sized("/static/y18.gif", 18, 18).style("border:1px white solid;")),
+    );
 
-    let td_links = o(td()).add_style("line-height:12pt; height:10px;").kid(
-        o(Span)
-            .add_class("pagetop")
-            .kid(o(B).add_class("hnname").kid(a("news", "Hacker News")))
-            .add_text(ONE_SPACE)
+    let td_links = td().style("line-height:12pt; height:10px;").kid(
+        Span.class("pagetop")
+            .kid(B.class("hnname").kid(a("news", "Hacker News")))
+            .text(ONE_SPACE)
             .kid(a("newest", "new"))
-            .add_text(PIPE_DELIMITER)
+            .text(PIPE_DELIMITER)
             .kid(a("newcomments", "comments"))
-            .add_text(PIPE_DELIMITER)
+            .text(PIPE_DELIMITER)
             .kid(a2("ask"))
-            .add_text(PIPE_DELIMITER)
+            .text(PIPE_DELIMITER)
             .kid(a2("show"))
-            .add_text(PIPE_DELIMITER)
+            .text(PIPE_DELIMITER)
             .kid(a2("jobs"))
-            .add_text(PIPE_DELIMITER)
+            .text(PIPE_DELIMITER)
             .kid(a2("submit")),
     );
 
-    let td_login = o(td())
-        .add_style("text-align:right;padding-right:4px;")
-        .kid(
-            o(Span)
-                .add_class("pagetop")
-                .kid(a("login?goto=news", "login")),
-        );
+    let td_login = td()
+        .style("text-align:right;padding-right:4px;")
+        .kid(Span.class("pagetop").kid(a("login?goto=news", "login")));
 
-    o(Tr).kid(
-        o(td()).set_id("nav-td").kid(
-            o(Table)
-                .set_id("nav-table")
-                .add_style("padding:2px")
-                .kid(o(Tr).kid(td_logo).kid(td_links).kid(td_login)),
+    Tr.kid(
+        td().id("nav-td").kid(
+            Table
+                .id("nav-table")
+                .style("padding:2px")
+                .kid(Tr.kid(td_logo).kid(td_links).kid(td_login)),
         ),
     )
 }
 
 #[cached]
 fn body_spacer() -> Node {
-    o(Tr)
-        .set_id("pagespace")
+    Tr.id("pagespace")
         .set_title("") // Well ok
-        .add_style("height:10px")
+        .style("height:10px")
 }
 
 /// Get the <head>...</head> contents.
@@ -88,7 +82,7 @@ fn body_spacer() -> Node {
 /// The frontpage wants the RSS alternate element, the comment page does not.
 #[cached]
 fn head(title: String, add_alternate: bool) -> Node {
-    let mut head = o(Head)
+    let mut head = Head
         .kid(Meta::name_content("referrer", "origin"))
         .kid(Meta::viewport_sane())
         .kid(Link::stylesheet(mime::TEXT_CSS, "/static/news.css"))
@@ -98,7 +92,7 @@ fn head(title: String, add_alternate: bool) -> Node {
         head.push_kid(Link::alternate("application/rss+xml", "RSS", "rss"))
     }
 
-    head.kid(o(Title).add_text(&title))
+    head.kid(Title.text(title))
 }
 
 fn table_fatitem(story: &Story) -> Node {
@@ -107,25 +101,22 @@ fn table_fatitem(story: &Story) -> Node {
     let item_id = &format!("item?id={}", story.id);
     let time_ago_href = o(A::href(item_id)).add_text(&time_ago(story.submission_time));
 
-    let score_span = o(Span)
-        .add_class("score")
-        .set_id(score_id)
-        .add_text(&format!("{} points", story.upvotes));
+    let score_span = Span
+        .class("score")
+        .id(score_id)
+        .text(format!("{} points", story.upvotes));
 
-    let user_href = o(A::href(&format!("user?id={}", story.author)))
-        .add_class("hnuser")
-        .add_text(&story.author);
+    let user_href = A::href(&format!("user?id={}", story.author))
+        .class("hnuser")
+        .text(&story.author);
 
-    let age_span = o(Span)
-        .add_class("age")
-        .set_title("2022-TODO")
-        .kid(time_ago_href);
+    let age_span = Span.class("age").set_title("2022-TODO").kid(time_ago_href);
 
-    let unv_span = o(Span).set_id(unv_id);
-    let hide_a = o(A::href("TODO")).add_text("hide");
-    let past_a = o(A::href("TODO")).add_class("hnpast").add_text("past");
-    let fav_a = o(A::href("TODO")).add_text("favorite");
-    let comments_a = o(A::href(item_id)).add_text(&format!("{} comments", story.comments.len()));
+    let unv_span = Span.id(unv_id);
+    let hide_a = A::href("TODO").text("hide");
+    let past_a = A::href("TODO").class("hnpast").text("past");
+    let fav_a = A::href("TODO").text("favorite");
+    let comments_a = A::href(item_id).text(format!("{} comments", story.comments.len()));
 
     let story_url = &story
         .url
@@ -140,73 +131,61 @@ fn table_fatitem(story: &Story) -> Node {
         .and_then(|url| url.domain().map(|url| url.to_owned()))
         .unwrap_or_else(|| story_url.clone());
 
-    o(Table)
-        .add_class("fatitem")
+    Table
+        .class("fatitem")
         .kid(
-            o(Tr)
-                .add_class("athing")
-                .set_id(&story.id.to_string())
+            Tr.class("athing")
+                .id(&story.id.to_string())
+                .kid(td().class("title").kid(Span.class("rank")))
                 .kid(
-                    o(Td::default())
-                        .add_class("title")
-                        .kid(o(Span).add_class("rank")),
-                )
-                .kid(
-                    o(Td::default()).add_class("votelinks").kid(
-                        o(A::href(&format!(
+                    td().class("votelinks").kid(
+                        A::href(&format!(
                             "vote?id={}&amp;how=up&amp;goto=item%3Fid%3D{}",
                             story.id, story.id
-                        )))
-                        .set_id(&format!("up_{}", story.id))
-                        .kid(o(Div).add_class("votearrow").set_title("upvote")),
+                        ))
+                        .id(format!("up_{}", story.id))
+                        .kid(Div.class("votearrow").set_title("upvote")),
                     ),
                 )
                 .kid(
-                    o(Td::default())
-                        .add_class("title")
+                    td().class("title")
+                        .kid(A::href(story_url).class("titlelink").text(&story.title))
                         .kid(
-                            o(A::href(story_url))
-                                .add_class("titlelink")
-                                .add_text(&story.title),
-                        )
-                        .kid(
-                            o(Span)
-                                .add_class("sitebit comhead")
-                                .add_text(" (")
+                            Span.class("sitebit comhead")
+                                .text(" (")
                                 .kid(
-                                    o(A::href("from?site=todo"))
-                                        .kid(o(Span).add_class("sitestr").add_text(&url_short)),
+                                    A::href("from?site=todo")
+                                        .kid(Span.class("sitestr").text(&url_short)),
                                 )
-                                .add_text(")"),
+                                .text(")"),
                         ),
                 ),
         )
         .kid(
-            o(Tr).kid(o(Td::colspan(2))).kid(
-                o(Td::default())
-                    .add_class("subtext")
+            Tr.kid(Td::colspan(2)).kid(
+                td().class("subtext")
                     .kid(score_span)
-                    .add_text(" by ")
+                    .text(" by ")
                     .kid(user_href)
-                    .add_text(ONE_SPACE)
+                    .text(ONE_SPACE)
                     .kid(age_span)
-                    .add_text(ONE_SPACE)
+                    .text(ONE_SPACE)
                     .kid(unv_span)
-                    .add_text(PIPE_DELIMITER)
+                    .text(PIPE_DELIMITER)
                     .kid(hide_a)
-                    .add_text(PIPE_DELIMITER)
+                    .text(PIPE_DELIMITER)
                     .kid(past_a)
-                    .add_text(PIPE_DELIMITER)
+                    .text(PIPE_DELIMITER)
                     .kid(fav_a)
-                    .add_text(PIPE_DELIMITER)
+                    .text(PIPE_DELIMITER)
                     .kid(comments_a),
             ),
         )
-        .kid(o(Tr).add_style("height:10px"))
+        .kid(Tr.style("height:10px"))
         .kid(
-            o(Tr).kid(o(Td::colspan(2))).kid(
-                o(Td::default()).kid(
-                    o(Form::new(Method::Post, "comment"))
+            Tr.kid(Td::colspan(2)).kid(
+                td().kid(
+                    Form::new(Method::Post, "comment")
                         .kid(Input::hidden("parent", &story.id.to_string()))
                         .kid(Input::hidden("goto", &format!("item?id={}", story.id)))
                         .kid(Input::hidden("hmac", "hmac-of-what?"))
@@ -222,13 +201,13 @@ fn table_fatitem(story: &Story) -> Node {
 fn tr_comment(comment: &Comment) -> Node {
     let id = &comment.id;
 
-    let td_ind = o(td()).add_class("ind").kid(Img::new_sized("s.gif", 0, 1)); // TODO: Add indent
+    let td_ind = td().class("ind").kid(Img::new_sized("s.gif", 0, 1)); // TODO: Add indent
 
-    let td_votelinks_a = o(A::href(&format!(
+    let td_votelinks_a = A::href(&format!(
         "vote?id={id}&amp;how=up&amp;goto=item%3Fid%3D{id}"
-    )))
-    .kid(o(Div).add_class("votearrow").set_title("upvote"));
-    let td_votelinks = o(td()).add_class("votelinks").kid(td_votelinks_a);
+    ))
+    .kid(Div.class("votearrow").set_title("upvote"));
+    let td_votelinks = td().class("votelinks").kid(td_votelinks_a);
 
     /*
     All of this stuff:
@@ -242,38 +221,33 @@ fn tr_comment(comment: &Comment) -> Node {
                 id="30897201" n="1" href="javascript:void(0)">[–]</a><span
                 class="onstory"></span> </span></div>
     */
-    let td_default_div_comhead = o(Div).kid(
-        o(Span)
-            .add_class("comhead")
+    let td_default_div_comhead = Div.kid(
+        Span.class("comhead")
             .kid(
-                o(A::href(&format!("user?id={}", comment.author)))
-                    .add_class("hnuser")
-                    .add_text(&comment.author),
+                A::href(&format!("user?id={}", comment.author))
+                    .class("hnuser")
+                    .text(&comment.author),
             )
             .kid(
-                o(Span)
-                    .add_class("age")
+                Span.class("age")
                     .set_title(&comment.time.to_string())
-                    .kid(
-                        o(A::href(&format!("item?id={}", comment.id)))
-                            .add_text(&time_ago(comment.time)),
-                    ),
+                    .kid(A::href(&format!("item?id={}", comment.id)).text(time_ago(comment.time))),
             )
-            .kid(o(Span).set_id(&format!("unv_{}", comment.id)))
+            .kid(Span.id(format!("unv_{}", comment.id)))
             .kid(
-                o(Span).add_class("navs").add_text(PIPE_DELIMITER).kid(
-                    o(A::href(&format!("#{}", comment.id)))
-                        .add_class("clicky")
-                        .add_text("next"),
+                Span.class("navs").text(PIPE_DELIMITER).kid(
+                    A::href(&format!("#{}", comment.id))
+                        .class("clicky")
+                        .text("next"),
                 ), // TODO: aria-hidden
             )
             .kid(
-                o(A::href("javascript:void(0)"))
-                    .add_class("togg clicky")
-                    .set_id(&comment.id.to_string())
-                    .add_text("[-]"), // TODO: n="1", n="<number>", what does it do?
+                A::href("javascript:void(0)")
+                    .class("togg clicky")
+                    .id(&comment.id.to_string())
+                    .text("[-]"), // TODO: n="1", n="<number>", what does it do?
             )
-            .kid(o(Span).add_class("onstory")),
+            .kid(Span.class("onstory")),
     );
 
     /*
@@ -290,30 +264,23 @@ fn tr_comment(comment: &Comment) -> Node {
                 </font>
         </div>
     */
-    let td_default_div_comment = o(Div)
-        .kid(o(Span).add_class("commtext c00").add_text(&comment.text))
-        .kid(
-            o(Div)
-                .add_class("reply")
-                .kid(o(P).kid(o(U).kid(A::href("TODO")))),
-        ); // TODO: <font> is deprecated, add class.
+    let td_default_div_comment = Div
+        .kid(Span.class("commtext c00").text(&comment.text))
+        .kid(Div.class("reply").kid(P.kid(U.kid(A::href("TODO"))))); // TODO: <font> is deprecated, add class.
 
-    let td_default = o(td())
-        .add_class("default")
+    let td_default = td()
+        .class("default")
         .kid(td_default_div_comhead)
         .kid(Br)
         .kid(td_default_div_comment);
 
-    o(Tr)
-        .add_class("athing comtr")
-        .set_id(&comment.id.to_string())
-        .kid(
-            o(Td::default()).kid(o(Table).kid(o(Tr).kid(td_ind).kid(td_votelinks).kid(td_default))),
-        )
+    Tr.class("athing comtr")
+        .id(&comment.id.to_string())
+        .kid(td().kid(Table.kid(Tr.kid(td_ind).kid(td_votelinks).kid(td_default))))
 }
 
 fn table_commen_tree(story: &Story) -> Node {
-    let mut table = o(Table).add_class("comment-tree");
+    let mut table = Table.class("comment-tree");
 
     for comment in &story.comments {
         table.push_kid(tr_comment(comment));
@@ -326,9 +293,8 @@ fn body_comments(story: Story) -> Node {
     let fatitem = table_fatitem(&story);
     let comment_tree = table_commen_tree(&story);
 
-    o(Tr).kid(
-        o(td())
-            .kid(fatitem)
+    Tr.kid(
+        td().kid(fatitem)
             .kid(Br)
             .kid(Br)
             .kid(comment_tree)
@@ -339,7 +305,7 @@ fn body_comments(story: Story) -> Node {
 
 #[cached]
 fn spacer() -> Node {
-    o(Tr).add_class("spacer").add_style("height:5px")
+    Tr.class("spacer").style("height:5px")
 }
 
 #[cached]
@@ -350,11 +316,9 @@ fn hnstory(story: Story) -> Node {
         format!("item?id={}", story.id)
     };
 
-    let mut title = o(td()).add_class("title").kid(
-        o(A::href(&title_link))
-            .add_class("titlelink")
-            .add_text(&story.title),
-    );
+    let mut title = td()
+        .class("title")
+        .kid(A::href(&title_link).class("titlelink").text(&story.title));
 
     if let Some(url) = &story.url {
         let url_long = url.to_string();
@@ -366,15 +330,14 @@ fn hnstory(story: Story) -> Node {
             .unwrap_or_else(|| url_long.clone());
 
         title.push_kid(
-            o(Span)
-                .add_class("sitebit comhead")
-                .add_text(" (")
+            Span.class("sitebit comhead")
+                .text(" (")
                 .kid(
-                    o(A::href(&format!("from?site={}", &url_short)))
-                        .kid(o(Span).add_class("sitestr"))
-                        .add_text(&url_short),
+                    A::href(&format!("from?site={}", &url_short))
+                        .kid(Span.class("sitestr"))
+                        .text(&url_short),
                 )
-                .add_text(")"),
+                .text(")"),
         );
     }
 
@@ -386,69 +349,65 @@ fn hnstory(story: Story) -> Node {
 
     Node::root()
         .kid(
-            o(Tr)
-                .add_class("athing")
-                .set_id(&story.id.to_string())
+            Tr.class("athing")
+                .id(story.id.to_string())
                 .kid(
-                    o(td()).add_class("title-rank").kid(
-                        o(Span)
-                            .add_class("rank")
-                            .add_text(&format!("{}.", story.rank)),
-                    ),
+                    td().class("title-rank")
+                        .kid(Span.class("rank").text(format!("{}.", story.rank))),
                 )
                 .kid(
-                    o(td()).add_class("votelinks").kid(
-                        o(A::href(&format!("vote?id={}&how=up&goto=news", story.id)))
-                            .set_id(&format!("up_{}", story.id))
-                            .kid(o(Div).add_class("votearrow").set_title("upvote")),
+                    td().class("votelinks").kid(
+                        A::href(&format!("vote?id={}&how=up&goto=news", story.id))
+                            .id(format!("up_{}", story.id))
+                            .kid(Div.class("votearrow").set_title("upvote")),
                     ),
                 )
                 .kid(title),
         )
         .kid(
-            o(Tr).kid(Td::colspan(2)).kid(
-                o(td())
-                    .add_class("subtext")
-                    .kid(o(Span).add_text(&format!("{} points", story.upvotes)))
-                    .add_text(" by ")
+            Tr.kid(Td::colspan(2)).kid(
+                td().class("subtext")
+                    .kid(Span.text(format!("{} points", story.upvotes)))
+                    .text(" by ")
                     .kid(
-                        o(A::href(&format!("user?id={}", story.author)))
-                            .add_class("hnuser")
-                            .add_text(&story.author)
-                            .add_text(ONE_SPACE),
+                        A::href(&format!("user?id={}", story.author))
+                            .class("hnuser")
+                            .text(&story.author)
+                            .text(ONE_SPACE),
                     )
                     .kid(
-                        o(Span)
-                            .add_class("age")
+                        Span.class("age")
                             .set_title("2022-03-28T16:35:29") // TODO: This thing
                             .kid(
-                                o(A::href(&format!("item?id={}", story.id)))
-                                    .add_text(&time_ago(story.submission_time)),
+                                A::href(&format!("item?id={}", story.id))
+                                    .text(time_ago(story.submission_time)),
                             ),
                     )
                     .kid(Span)
-                    .add_text(PIPE_DELIMITER)
-                    .kid(o(A::href(&format!("hide?id={}&goto=news", story.id))).add_text("hide"))
-                    .add_text(PIPE_DELIMITER)
-                    .kid(o(A::href(&format!("item?id={}", { story.id }))).add_text(&comment_text)),
+                    .text(PIPE_DELIMITER)
+                    .kid(A::href(&format!("hide?id={}&goto=news", story.id)))
+                    .text("hide")
+                    .text(PIPE_DELIMITER)
+                    .kid(A::href(&format!("item?id={}", { story.id })))
+                    .text(&comment_text),
             ),
         )
 }
 
 fn body_stories(stories: Vec<Story>) -> Node {
-    let mut items = o(Table).add_class("itemlist");
+    let mut items = Table.class("itemlist");
 
     for story in stories {
         items.push_kid(Node::root().kid(hnstory(story)).kid(spacer()))
     }
 
-    o(Tr).kid(o(td()).kid(items))
+    Tr.kid(td().kid(items))
 }
 
 fn body(body_node: Node) -> Node {
-    o(Body).kid(
-        o(Table)
-            .set_id("hnmain")
+    Body.kid(
+        Table
+            .id("hnmain")
             .kid(body_nav())
             .kid(body_spacer())
             .kid(body_node)
@@ -458,41 +417,40 @@ fn body(body_node: Node) -> Node {
 
 #[cached]
 fn script() -> Node {
-    o(Script)
+    Script.into_node()
 }
 
 #[cached]
 fn body_footer() -> Node {
-    let invisible_gif = o(Img::new_sized("/static/s.gif", 0, 10));
-    let divider = o(Table).kid(o(Tr).kid(td()).set_id("footer-divider"));
-    let applications = o(A::href("https://www.ycombinator.com/apply/"))
-        .add_text("Applications are open for YC Summer 2022");
+    let invisible_gif = Img::new_sized("/static/s.gif", 0, 10);
+    let divider = Table.kid(Tr.kid(td()).id("footer-divider"));
+    let applications = A::href("https://www.ycombinator.com/apply/")
+        .text("Applications are open for YC Summer 2022");
 
-    let links = o(Span)
-        .add_class("yclinks")
+    let links = Span
+        .class("yclinks")
         .kid(a("newsguidelines.html", "Guidelines"))
-        .add_text(PIPE_DELIMITER)
+        .text(PIPE_DELIMITER)
         .kid(a("newsfaq.html", "FAQ"))
-        .add_text(PIPE_DELIMITER)
+        .text(PIPE_DELIMITER)
         .kid(a("lists", "Lists"))
-        .add_text(PIPE_DELIMITER)
+        .text(PIPE_DELIMITER)
         .kid(a("https://github.com/HackerNews/API", "API"))
-        .add_text(PIPE_DELIMITER)
+        .text(PIPE_DELIMITER)
         .kid(a("security.html", "Security"))
-        .add_text(PIPE_DELIMITER)
+        .text(PIPE_DELIMITER)
         .kid(a("http://www.ycombinator.com/legal/", "Legal"))
-        .add_text(PIPE_DELIMITER)
+        .text(PIPE_DELIMITER)
         .kid(a("http://www.ycombinator.com/apply/", "Apply"))
-        .add_text(PIPE_DELIMITER)
+        .text(PIPE_DELIMITER)
         .kid(a("mailto:hn@ycombinator.com", "Contact"));
 
-    let search = o(Form::new(form::Method::Get, "//hn.algolia.com/"))
-        .add_text("Search: ")
-        .kid(o(Input::text("q", "")));
+    let search = Form::new(form::Method::Get, "//hn.algolia.com/")
+        .text("Search: ")
+        .kid(Input::text("q", ""));
 
-    o(Tr).set_id("footer").kid(
-        o(td())
-            .kid(invisible_gif)
+    Tr.id("footer").kid(
+        td().kid(invisible_gif)
             .kid(divider)
             .kid(Br)
             .kid(applications)

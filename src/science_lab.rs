@@ -67,6 +67,46 @@ use crate::tags::Tag;
 
 pub trait NodeExt {
     fn into_node(self) -> Node;
+
+    fn id<S>(&self, id: S) -> Node
+    where
+        S: AsRef<str>,
+        Self: Clone,
+    {
+        self.clone().into_node().set_id(id.as_ref())
+    }
+
+    fn class<S>(&self, class: S) -> Node
+    where
+        S: AsRef<str>,
+        Self: Clone,
+    {
+        self.clone().into_node().add_class(class.as_ref())
+    }
+
+    fn kid<K>(&self, kid: K) -> Node
+    where
+        K: NodeExt,
+        Self: Clone,
+    {
+        self.clone().into_node().kid(kid)
+    }
+
+    fn text<T>(&self, text: T) -> Node
+    where
+        T: AsRef<str>,
+        Self: Clone,
+    {
+        self.clone().into_node().add_text(text.as_ref())
+    }
+
+    fn style<S>(&self, style: S) -> Node
+    where
+        S: AsRef<str>,
+        Self: Clone,
+    {
+        self.clone().into_node().add_style(style.as_ref())
+    }
 }
 
 impl<T> NodeExt for T

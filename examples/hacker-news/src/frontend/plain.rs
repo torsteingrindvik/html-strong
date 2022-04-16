@@ -1,5 +1,6 @@
 use cached::proc_macro::cached;
 use html_strong::document_tree::{o, Node};
+use html_strong::science_lab::NodeExt;
 use html_strong::tags::*;
 use html_strong::template;
 
@@ -12,9 +13,9 @@ pub struct Plain;
 
 #[cached]
 fn plain_story(story: Story) -> Node {
-    let title = o(H1).add_text(&format!("#{} - {}", story.rank, story.title));
+    let title = H1.text(format!("#{} - {}", story.rank, story.title));
 
-    let subtitle = o(P).add_text(&format!(
+    let subtitle = P.text(format!(
         "{} points • by {} • {}",
         story.upvotes,
         story.author,
@@ -26,12 +27,12 @@ fn plain_story(story: Story) -> Node {
 
         subtitle
             .add_text(" • ")
-            .kid(o(A::href(&url.to_string())).add_text(short))
+            .kid(A::href(&url.to_string()).text(short))
     } else {
         subtitle
     };
 
-    o(Div).add_class("story").kid(title).kid(subtitle)
+    Div.class("story").kid(title).kid(subtitle)
 }
 
 impl Renderable for Plain {
