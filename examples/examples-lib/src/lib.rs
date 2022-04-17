@@ -76,7 +76,12 @@ pub fn html_doc<S: AsRef<str>>(
     template::HtmlDocumentBuilder::new()
         // TODO: <nav>
         .with_head(head)
-        .with_body(body)
+        .with_body(
+            tags::Body
+                .class("container")
+                .text("This wraps whatever else")
+                .kid(body),
+        )
         // TODO: <footer>
         .build()
 }

@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use axum::{
-    response::Html,
+    extract::Path,
+    response::{Html, IntoResponse, Redirect},
     routing::{get, get_service},
     Router,
 };
@@ -10,20 +11,20 @@ use tower_http::services::ServeDir;
 
 use crate::md_to_html;
 
-async fn read_file(path: &str) -> Result<String> {
-    let mut f = File::open(path).await.with_context(|| path.to_string())?;
+async fn read_file(path: String) -> Result<String> {
+    let mut f = File::open(&path).await.with_context(|| path)?;
     let mut md = String::new();
     f.read_to_string(&mut md).await?;
 
     Ok(md)
 }
 
-async fn front_page_impl() -> Result<Html<String>> {
+async fn front_page_impl(blog_post: String) -> Result<Html<String>> {
     // TODO: Find a nicer way to do this. Ideally we would just use
     // "hello-world.md".
     //
     // Could we make this into a request, and use axum features?
-    let md = read_file("../markdown-blog/static/hello-world.md").await?;
+    let md = read_file(format!("../markdown-blog/static/{blog_post}.md")).await?;
     let body = md_to_html::md_to_html(&md);
 
     let doc = examples_lib::html_doc(
@@ -43,18 +44,26 @@ async fn front_page_impl() -> Result<Html<String>> {
     examples_lib::render(doc)
 }
 
-async fn front_page() -> std::result::Result<Html<String>, String> {
-    front_page_impl().await.map_err(|e| format!("{e:#?}"))
+async fn front_page(Path(blog): Path<String>) -> std::result::Result<Html<String>, String> {
+    front_page_impl(blog).await.map_err(|e| format!("{e:#?}"))
+}
+
+async fn default_blog_post() -> impl IntoResponse {
+    Redirect::to("/blog/hello-world")
 }
 
 pub struct MarkdownBlog;
 
 impl examples_lib::Example for MarkdownBlog {
     fn router(&self, from_me_to_you: &str) -> Router {
-        Router::new().route("/", get(front_page)).nest(
-            "/static",
-            get_service(ServeDir::new(format!("{from_me_to_you}/static")))
-                .handle_error(internal_server_error),
-        )
+        // Redirectus erectus
+        Router::new()
+            .route("/", get(default_blog_post))
+            .route("/:post", get(front_page))
+            .nest(
+                "/static",
+                get_service(ServeDir::new(format!("{from_me_to_you}/static")))
+                    .handle_error(internal_server_error),
+            )
     }
 }

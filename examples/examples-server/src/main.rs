@@ -9,9 +9,11 @@ pub async fn main() {
     tracing_subscriber::fmt::init();
 
     let blog = markdown_blog::server::MarkdownBlog;
+    let hn = hacker_news::server::HackerNews::new();
 
     let app = Router::new()
         .nest("/blog", blog.router("../markdown-blog"))
+        .nest("/hn", hn.router("../hacker-news"))
         // TODO: Shared favicon
         .route(
             "/favicon.ico",

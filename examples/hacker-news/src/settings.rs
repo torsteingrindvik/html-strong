@@ -2,7 +2,6 @@ use html_strong::{
     document_tree::{o, Node},
     science_lab::NodeExt,
     tags::{form::Method, *},
-    template,
 };
 
 /*
@@ -83,30 +82,26 @@ impl Settings {
     }
 
     pub fn into_page(self) -> Node {
-        let self_ = self.into_node();
+        let body = Body
+            .kid(self.into_node())
+            .class("d-flex flex-column min-vh-100 justify-content-center");
 
-        let head = template::head()
-            .kid(Link::stylesheet(
-                mime::TEXT_CSS,
+        examples_lib::html_doc(
+            Some(vec![
                 "https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css",
-            ))
-            .kid(Link::stylesheet(mime::TEXT_CSS, "/static/list-groups.css"));
-
-        template::HtmlDocumentBuilder::new()
-            .with_head(head)
-            .with_body(
-                o(Body)
-                    .kid(self_)
-                    .add_class("d-flex flex-column min-vh-100 justify-content-center"),
-            )
-            .build()
+                "/hn/static/list-groups.css",
+            ]),
+            None,
+            None,
+            body,
+        )
     }
 }
 
 impl NodeExt for Settings {
     fn into_node(self) -> Node {
         let mut form =
-            o(Form::new(Method::Post, "/settings")).add_class("list-group list-group-checkable");
+            o(Form::new(Method::Post, "/hn/settings")).add_class("list-group list-group-checkable");
 
         for option in self.options {
             let name = option.title.to_lowercase();

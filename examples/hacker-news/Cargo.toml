@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 html-strong = { path = "../.." }
+examples-lib = { path = "../examples-lib" }
 
 axum = "0.5"
 axum-extra = { version = "0.2", features = ["cookie"] }

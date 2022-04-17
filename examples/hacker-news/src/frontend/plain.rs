@@ -1,8 +1,7 @@
 use cached::proc_macro::cached;
-use html_strong::document_tree::{o, Node};
+use html_strong::document_tree::Node;
 use html_strong::science_lab::NodeExt;
 use html_strong::tags::*;
-use html_strong::template;
 
 use crate::story::Story;
 use crate::util;
@@ -37,13 +36,13 @@ fn plain_story(story: Story) -> Node {
 
 impl Renderable for Plain {
     fn frontpage(&self, stories: Vec<Story>) -> Node {
-        let mut body = o(Body);
+        let mut body = Body.into_node();
 
         for story in stories {
             body.push_kid(plain_story(story));
         }
 
-        template::HtmlDocumentBuilder::new().with_body(body).build()
+        examples_lib::html_doc::<String>(None, None, None, body)
     }
 
     fn comments(&self, _story: Story) -> Node {
