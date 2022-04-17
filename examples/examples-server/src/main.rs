@@ -8,10 +8,12 @@ use tower_http::{compression::CompressionLayer, services::ServeFile, trace::Trac
 pub async fn main() {
     tracing_subscriber::fmt::init();
 
+    let home = examples_lib::Home;
     let blog = markdown_blog::server::MarkdownBlog;
     let hn = hacker_news::server::HackerNews::new();
 
     let app = Router::new()
+        .nest("/", home.router("../examples-lib"))
         .nest("/blog", blog.router("../markdown-blog"))
         .nest("/hn", hn.router("../hacker-news"))
         // TODO: Shared favicon

@@ -1,9 +1,11 @@
 use axum::response::Html;
+use axum::routing::{get, get_service};
 use axum::Router;
 use html_strong::science_lab::NodeExt;
-use html_strong::tags;
+use html_strong::tags::{self, Body, Br, Nav, A, P};
 use html_strong::{document_tree::Node, template};
 use reqwest::StatusCode;
+use tower_http::services::ServeDir;
 
 /// Common functionality in examples..
 pub trait Example {
@@ -32,6 +34,32 @@ pub fn render(contents: Node) -> Result<Html<String>, anyhow::Error> {
     Ok(Html(response))
 }
 
+async fn home() -> Result<Html<String>, String> {
+    let body = Body.kid(Br).kid(Br).kid(
+        P.text("Currently hosting ")
+            .kid(
+                A::href("https://github.com/torsteingrindvik/html-strong/tree/examples-server")
+                    .text("html-strong"),
+            )
+            .text(" on a WIP branch, so lots of jank. Enjoy the jumping navbar and font magic."),
+    );
+    let html = html_doc(Some(vec!["/static/example.css"]), None, None, body);
+
+    render(html).map_err(|e| format!("{e:#?}"))
+}
+
+pub struct Home;
+
+impl Example for Home {
+    fn router(&self, from_me_to_you: &str) -> Router {
+        Router::new().route("/", get(home)).nest(
+            "/static",
+            get_service(ServeDir::new(format!("{from_me_to_you}/static")))
+                .handle_error(internal_server_error),
+        )
+    }
+}
+
 /// Wrap contents of example in a common HTML document template.
 /// This template mainly sets up a default document structure,
 /// and includes the common <nav> (TODO) and <footer> (TODO).
@@ -43,6 +71,14 @@ pub fn render(contents: Node) -> Result<Html<String>, anyhow::Error> {
 /// script_inline: An optional list of inline javascript to include.
 ///
 /// body: The body of the example in question.
+/// Note that this function will wrap the passed body node like this:
+///
+/// <body>
+/// <nav>...</nav>
+/// <your body></your body>
+/// </body>
+///
+/// So don't actually pass a `Body`.
 pub fn html_doc<S: AsRef<str>>(
     css: Option<Vec<S>>,
     script: Option<Vec<S>>,
@@ -59,6 +95,12 @@ pub fn html_doc<S: AsRef<str>>(
         }
     }
 
+    // Always want the "base CSS" used for the top nav.
+    head.push_kid(tags::Link::stylesheet(
+        mime::TEXT_CSS,
+        "/static/example.css",
+    ));
+
     // Add scripts.
     if let Some(script) = script {
         for script in script {
@@ -73,15 +115,29 @@ pub fn html_doc<S: AsRef<str>>(
         }
     }
 
+    /*
+        See: https://www.w3schools.com/howto/howto_js_topnav.asp
+
+        <div class="topnav">
+          <a class="active" href="#home">Home</a>
+          <a href="#news">News</a>
+          <a href="#contact">Contact</a>
+          <a href="#about">About</a>
+        </div>
+
+        Not sure why they don't use a <nav>.
+    */
+    let nav = Nav
+        .class("topnav")
+        .kid(A::href("/").text("Home"))
+        .kid(A::href("/hn").text("Hacker News"))
+        .kid(A::href("/blog").text("Blog"))
+        .kid(A::href("/hn/settings").text("Settings"));
+
     template::HtmlDocumentBuilder::new()
         // TODO: <nav>
         .with_head(head)
-        .with_body(
-            tags::Body
-                .class("container")
-                .text("This wraps whatever else")
-                .kid(body),
-        )
+        .with_body(tags::Body.kid(nav).kid(body))
         // TODO: <footer>
         .build()
 }

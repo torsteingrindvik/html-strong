@@ -82,8 +82,8 @@ impl Settings {
     }
 
     pub fn into_page(self) -> Node {
-        let body = Body
-            .kid(self.into_node())
+        let node = self
+            .into_node()
             .class("d-flex flex-column min-vh-100 justify-content-center");
 
         examples_lib::html_doc(
@@ -93,7 +93,7 @@ impl Settings {
             ]),
             None,
             None,
-            body,
+            node,
         )
     }
 }

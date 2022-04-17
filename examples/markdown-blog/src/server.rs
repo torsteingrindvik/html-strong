@@ -29,7 +29,8 @@ async fn front_page_impl(blog_post: String) -> Result<Html<String>> {
 
     let doc = examples_lib::html_doc(
         Some(vec![
-            "/blog/css/blog.css",
+            // TODO: Fix this prefix
+            "/blog/static/css/blog.css",
             "https://cdn.jsdelivr.net/npm/comic-mono@0.0.1/index.css",
             "https://fonts.googleapis.com/css2?family=Domine:wght@500&display=swap",
             "//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/monokai.min.css",
