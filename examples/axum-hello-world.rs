@@ -1,12 +1,7 @@
 use axum::{response::Html, routing::get, Router};
 use std::{net::SocketAddr, path::PathBuf};
 
-use html_strong::{
-    document_tree::{o, Node},
-    global_attributes::Id,
-    tags::*,
-    template,
-};
+use html_strong::{document_tree::Node, science_lab::NodeExt, tags::*, template};
 
 #[tokio::main]
 async fn main() {
@@ -34,9 +29,7 @@ fn get_response(contents: Node) -> Html<String> {
 }
 
 async fn handler() -> Html<String> {
-    let contents = o(h1::H1).add_text("Hello, World! :-)");
-
-    get_response(contents)
+    get_response(H1.text("Hello, World! :-)"))
 }
 
 async fn handler_from_disk() -> Html<String> {
@@ -50,7 +43,7 @@ async fn handler_from_disk() -> Html<String> {
         .expect("Should be able to read file");
 
     // Create a response from it.
-    let body = o(h1::H1).add_text(&text);
+    let body = H1.text(&text);
     get_response(
         template::HtmlDocumentBuilder::new()
             .with_head(template::head().kid(Meta::refresh(1))) // Auto-refresh, try changing it on disk!
@@ -60,27 +53,25 @@ async fn handler_from_disk() -> Html<String> {
 }
 
 async fn handler_tree() -> Html<String> {
-    let body = o(Body)
+    let body = Body
         .kid(
-            o(Div)
-                .add_attr(Id::new("content"))
-                .kid(o(H1).add_text("Heading here"))
-                .kid(o(P).add_text("Lorem ipsum dolor sit amet."))
+            Div.id("content")
+                .kid(H1.text("Heading here"))
+                .kid(P.text("Lorem ipsum dolor sit amet."))
                 .kid(
-                    o(P).add_text("Lorem ipsum dolor ")
-                        .kid(o(Em).add_text("sit"))
-                        .add_text(" amet."),
+                    P.text("Lorem ipsum dolor ")
+                        .kid(Em.text("sit"))
+                        .text(" amet."),
                 )
                 .kid(Hr),
         )
         .kid(
-            o(Div).add_attr(Id::new("nav")).kid(
-                o(Ul)
-                    .kid(o(Li).add_text("item 1"))
-                    .kid(o(Li).add_text("item 2"))
-                    .kid(o(Li).add_text("item 3"))
-                    .kid(o(Li).add_text("item 4"))
-                    .kid(o(Li).add_text("item 5")),
+            Div.id("nav").kid(
+                Ul.kid(Li.text("item 1"))
+                    .kid(Li.text("item 2"))
+                    .kid(Li.text("item 3"))
+                    .kid(Li.text("item 4"))
+                    .kid(Li.text("item 5")),
             ),
         );
 

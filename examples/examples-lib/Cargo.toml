@@ -1,5 +1,5 @@
 [package]
-name = "markdown-blog"
+name = "examples-lib"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,9 +7,6 @@ edition = "2021"
 
 [dependencies]
 html-strong = { path = "../.." }
-examples-lib = { path = "../examples-lib" }
-
-pulldown-cmark = "0.9.1"
 
 axum = "0.5"
 axum-extra = { version = "0.2", features = ["cookie"] }

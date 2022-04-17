@@ -416,11 +416,6 @@ fn body(body_node: Node) -> Node {
 }
 
 #[cached]
-fn script() -> Node {
-    Script.into_node()
-}
-
-#[cached]
 fn body_footer() -> Node {
     let invisible_gif = Img::new_sized("/static/s.gif", 0, 10);
     let divider = Table.kid(Tr.kid(td()).id("footer-divider"));
@@ -476,7 +471,7 @@ impl Renderable for Original {
             .add_attr(Lang::English)
             .kid(head("Hacker News".into(), true))
             .kid(body(story_nodes))
-            .kid(script())
+            .kid(Script::new())
     }
 
     fn comments(&self, story: Story) -> Node {
@@ -489,6 +484,6 @@ impl Renderable for Original {
             .add_attr(Lang::English)
             .kid(head(title, false))
             .kid(body(comment_nodes))
-            .kid(script())
+            .kid(Script::new())
     }
 }

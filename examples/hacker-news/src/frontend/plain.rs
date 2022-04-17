@@ -46,7 +46,7 @@ impl Renderable for Plain {
         template::HtmlDocumentBuilder::new().with_body(body).build()
     }
 
-    fn comments(&self, story: Story) -> Node {
+    fn comments(&self, _story: Story) -> Node {
         todo!()
     }
 }

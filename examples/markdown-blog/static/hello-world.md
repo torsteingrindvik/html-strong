@@ -34,7 +34,7 @@ fn birth(mut nodes: Vec<Node>) -> Vec<Node> {
 
 This is an image:
 
-![sample-image](/static/img/blossom.webp)
+![sample-image](img/blossom.webp)
 
 > Image: "A Wild Cherry (Prunus avium) in flower"
 > Image Author: Benjamin Gimmel
@@ -44,6 +44,6 @@ This is an image:
 
 This is animated:
 
-![sample-animated](/static/anim/humpback.webp)
+![sample-animated](anim/humpback.webp)
 
 > Humpback Whales: [youtube](https://www.youtube.com/watch?v=CnKgRXGt-S8)
