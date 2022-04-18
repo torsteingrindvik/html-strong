@@ -4,30 +4,53 @@
 	box-sizing: border-box;
 }
 
+/* To make rem sizes predictable across examples */
+/* html {
+	font-size: 100% !important;
+} */
+
+.example-body {
+	width    : 100%;
+	max-width: 60%;
+
+	/* These two center content! */
+	margin-left : auto;
+	margin-right: auto;
+
+	margin-bottom: 2rem;
+}
+
+@media (max-width: 1200px) {
+	.example-body {
+		max-width: 90%;
+	}
+}
+
 /* Add a black background color to the top navigation */
-.topnav {
+.example-nav {
 	background-color: #333;
 	overflow        : hidden;
+	margin-bottom   : 2rem;
 }
 
 /* Style the links inside the navigation bar */
-.topnav a {
+.example-nav a {
 	float          : left;
 	color          : #f2f2f2;
 	text-align     : center;
-	padding        : 14px 16px;
+	padding        : 1rem 1rem;
 	text-decoration: none;
-	font-size      : 17px;
+	font-size      : 1rem;
 }
 
 /* Change the color of links on hover */
-.topnav a:hover {
+.example-nav a:hover {
 	background-color: #ddd;
 	color           : black;
 }
 
 /* Add a color to the active/current link */
-.topnav a.active {
+.example-nav a.active {
 	background-color: #04AA6D;
 	color           : white;
 }

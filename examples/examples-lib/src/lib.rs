@@ -1,9 +1,9 @@
-use axum::response::Html;
-use axum::routing::{get, get_service};
-use axum::Router;
-use html_strong::science_lab::NodeExt;
-use html_strong::tags::{self, Body, Br, Nav, A, P};
-use html_strong::{document_tree::Node, template};
+use axum::{
+    response::Html,
+    routing::{get, get_service},
+    Router,
+};
+use html_strong::{document_tree::Node, science_lab::NodeExt, tags::*, template};
 use reqwest::StatusCode;
 use tower_http::services::ServeDir;
 
@@ -35,7 +35,7 @@ pub fn render(contents: Node) -> Result<Html<String>, anyhow::Error> {
 }
 
 async fn home() -> Result<Html<String>, String> {
-    let body = Body.kid(Br).kid(Br).kid(
+    let contents = Div.kid(
         P.text("Currently hosting ")
             .kid(
                 A::href("https://github.com/torsteingrindvik/html-strong/tree/examples-server")
@@ -43,7 +43,7 @@ async fn home() -> Result<Html<String>, String> {
             )
             .text(" on a WIP branch, so lots of jank. Enjoy the jumping navbar and font magic."),
     );
-    let html = html_doc(Some(vec!["/static/example.css"]), None, None, body);
+    let html = html_doc(Some(vec!["/static/example.css"]), None, None, contents);
 
     render(html).map_err(|e| format!("{e:#?}"))
 }
@@ -91,27 +91,24 @@ pub fn html_doc<S: AsRef<str>>(
     // Add stylesheets.
     if let Some(css) = css {
         for css in css {
-            head.push_kid(tags::Link::stylesheet(mime::TEXT_CSS, css.as_ref()));
+            head.push_kid(Link::stylesheet(mime::TEXT_CSS, css.as_ref()));
         }
     }
 
     // Always want the "base CSS" used for the top nav.
-    head.push_kid(tags::Link::stylesheet(
-        mime::TEXT_CSS,
-        "/static/example.css",
-    ));
+    head.push_kid(Link::stylesheet(mime::TEXT_CSS, "/static/example.css"));
 
     // Add scripts.
     if let Some(script) = script {
         for script in script {
-            head.push_kid(tags::Script::src(script.as_ref()));
+            head.push_kid(Script::src(script.as_ref()));
         }
     }
 
     // Add scripts where content is defined inline.
     if let Some(script) = script_inline {
         for script in script {
-            head.push_kid(tags::Script::new().text(script));
+            head.push_kid(Script::new().text(script));
         }
     }
 
@@ -128,16 +125,18 @@ pub fn html_doc<S: AsRef<str>>(
         Not sure why they don't use a <nav>.
     */
     let nav = Nav
-        .class("topnav")
         .kid(A::href("/").text("Home"))
         .kid(A::href("/hn").text("Hacker News"))
         .kid(A::href("/blog").text("Blog"))
         .kid(A::href("/hn/settings").text("Settings"));
 
+    let body = Body
+        .kid(nav.class("example-nav"))
+        .kid(body.class("example-body"));
+
     template::HtmlDocumentBuilder::new()
-        // TODO: <nav>
         .with_head(head)
-        .with_body(tags::Body.kid(nav).kid(body))
+        .with_body(body)
         // TODO: <footer>
         .build()
 }

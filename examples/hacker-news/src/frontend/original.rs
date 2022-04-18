@@ -377,8 +377,8 @@ fn body_stories(stories: Vec<Story>) -> Node {
     Tr.kid(td().kid(items))
 }
 
-fn body(body_node: Node) -> Node {
-    Body.kid(
+fn main_contents(body_node: Node) -> Node {
+    Div.kid(
         Table
             .id("hnmain")
             .kid(body_nav())
@@ -431,25 +431,6 @@ fn body_footer() -> Node {
     )
 }
 
-// fn head(title: String, add_alternate: bool) -> Node {
-//     // TODO: Examples lib fn
-
-//     let mut head = Head
-//         .kid(Meta::name_content("referrer", "origin"))
-//         .kid(Meta::viewport_sane())
-//         .kid(Link::stylesheet(mime::TEXT_CSS, "/hn/static/news.css"))
-//         .kid(Link::stylesheet(
-//             mime::TEXT_CSS,
-//             "/hn/static/news-extra.css",
-//         ))
-//         .kid(Link::icon("favicon.ico"));
-//     if add_alternate {
-//         head.push_kid(Link::alternate("application/rss+xml", "RSS", "rss"))
-//     }
-
-//     head.kid(Title.text(title))
-// }
-
 impl Renderable for Original {
     fn frontpage(&self, stories: Vec<Story>) -> Node {
         for story in stories.iter().take(10) {
@@ -462,7 +443,7 @@ impl Renderable for Original {
             Some(vec!["/hn/static/news.css", "/hn/static/news-extra.css"]),
             None,
             None,
-            body(story_nodes),
+            main_contents(story_nodes),
         )
     }
 
@@ -475,7 +456,7 @@ impl Renderable for Original {
             Some(vec!["/hn/static/news.css", "/hn/static/news-extra.css"]),
             None,
             None,
-            body(comment_nodes),
+            main_contents(comment_nodes),
         )
     }
 }

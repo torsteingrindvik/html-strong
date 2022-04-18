@@ -19,7 +19,7 @@ async fn read_file(path: String) -> Result<String> {
     Ok(md)
 }
 
-async fn front_page_impl(blog_post: String) -> Result<Html<String>> {
+async fn blog_post_impl(blog_post: String) -> Result<Html<String>> {
     // TODO: Find a nicer way to do this. Ideally we would just use
     // "hello-world.md".
     //
@@ -45,8 +45,8 @@ async fn front_page_impl(blog_post: String) -> Result<Html<String>> {
     examples_lib::render(doc)
 }
 
-async fn front_page(Path(blog): Path<String>) -> std::result::Result<Html<String>, String> {
-    front_page_impl(blog).await.map_err(|e| format!("{e:#?}"))
+async fn blog_post(Path(blog): Path<String>) -> std::result::Result<Html<String>, String> {
+    blog_post_impl(blog).await.map_err(|e| format!("{e:#?}"))
 }
 
 async fn default_blog_post() -> impl IntoResponse {
@@ -60,7 +60,7 @@ impl examples_lib::Example for MarkdownBlog {
         // Redirectus erectus
         Router::new()
             .route("/", get(default_blog_post))
-            .route("/:post", get(front_page))
+            .route("/:post", get(blog_post))
             .nest(
                 "/static",
                 get_service(ServeDir::new(format!("{from_me_to_you}/static")))

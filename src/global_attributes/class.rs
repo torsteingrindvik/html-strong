@@ -1,49 +1,51 @@
-use super::Attribute;
+// use super::Attribute;
 
-#[derive(Debug, Clone)]
-pub struct Class(String);
+pub type Class = String;
 
-impl Class {
-    #[must_use]
-    pub fn new(value: &str) -> Self {
-        Self(value.into())
-    }
-}
+// #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+// pub struct Class(String);
 
-impl Attribute for Class {
-    fn name(&self) -> &'static str {
-        "class"
-    }
+// impl Class {
+//     #[must_use]
+//     pub fn new(value: &str) -> Self {
+//         Self(value.into())
+//     }
+// }
 
-    fn value(&self) -> String {
-        self.0.clone()
-    }
-}
+// impl Attribute for Class {
+//     fn name(&self) -> &'static str {
+//         "class"
+//     }
 
-#[cfg(test)]
-mod tests {
-    use crate::{document_tree::o, tags::Div};
-    use pretty_assertions::assert_eq;
+//     fn value(&self) -> String {
+//         self.0.clone()
+//     }
+// }
 
-    #[test]
-    fn several_classes() {
-        let div = o(Div)
-            .add_text("Some div")
-            .add_class("class-1")
-            .add_class("class-2");
+// #[cfg(test)]
+// mod tests {
+//     use crate::{document_tree::o, tags::Div};
+//     use pretty_assertions::assert_eq;
 
-        let expected = r#"<div class="class-1" class="class-2">Some div</div>"#;
-        let result = div.render_string().unwrap();
+//     #[test]
+//     fn several_classes() {
+//         let div = o(Div)
+//             .add_text("Some div")
+//             .add_class("class-1")
+//             .add_class("class-2");
 
-        // TODO: We don't want this.
-        assert_eq!(expected, result);
+//         let expected = r#"<div class="class-1" class="class-2">Some div</div>"#;
+//         let result = div.render_string().unwrap();
 
-        // TODO: We can do this, but this is more of a "set class string" than "add class".
-        let div = o(Div).add_text("Some div").add_class("class-1 class-2");
+//         // TODO: We don't want this.
+//         assert_eq!(expected, result);
 
-        let expected = r#"<div class="class-1 class-2">Some div</div>"#;
-        let result = div.render_string().unwrap();
+//         // TODO: We can do this, but this is more of a "set class string" than "add class".
+//         let div = o(Div).add_text("Some div").add_class("class-1 class-2");
 
-        assert_eq!(expected, result);
-    }
-}
+//         let expected = r#"<div class="class-1 class-2">Some div</div>"#;
+//         let result = div.render_string().unwrap();
+
+//         assert_eq!(expected, result);
+//     }
+// }

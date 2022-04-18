@@ -1,4 +1,4 @@
-use std::io;
+use std::{collections::HashSet, io};
 
 use crate::{
     global_attributes::{Attribute, Class, Id, Style, Title},
@@ -9,6 +9,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct Node {
     global_attributes: Vec<Box<dyn Attribute>>,
+    classes: HashSet<Class>,
     tag: Box<dyn Tag>,
     text: Option<String>,
     children: Vec<Node>,
@@ -36,6 +37,7 @@ impl Node {
             children: vec![],
             text: None,
             global_attributes: vec![],
+            classes: HashSet::new(),
         }
     }
 
@@ -70,6 +72,18 @@ impl Node {
     {
         if self.tag.open_tag() {
             write!(writer, "<{}", self.tag.name())?;
+
+            if !self.classes.is_empty() {
+                let all_classes = self
+                    .classes
+                    .iter()
+                    .cloned()
+                    .collect::<Vec<_>>()
+                    .as_slice()
+                    .join(" ");
+
+                write!(writer, " class=\"{all_classes}\"")?;
+            }
 
             let mut render_attr =
                 |attr: &dyn Attribute| write!(writer, " {}=\"{}\"", attr.name(), attr.value());
@@ -192,11 +206,9 @@ impl Node {
 
     #[must_use]
     pub fn add_class(mut self, class: &str) -> Self {
-        // TODO: It would be better if we had something like the
-        // hashmap entry API, such that we can modify an existing attribute.
-        //
-        // Browser does not like two instances of `class`.
-        self.global_attributes.push(Box::new(Class::new(class)));
+        for class in class.split_ascii_whitespace() {
+            self.classes.insert(class.to_string());
+        }
         self
     }
 

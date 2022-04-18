@@ -134,11 +134,11 @@ pub fn md_to_html(md: &str) -> Node {
         .into_iter()
         .fold((vec![Div.into_node()], None), consume_event);
 
-    let body = html.pop().expect("Root div");
+    let contents = html.pop().expect("Root div");
     assert!(
         html.is_empty(),
         "Should end up with only the initial element- kids added"
     );
 
-    body
+    contents
 }

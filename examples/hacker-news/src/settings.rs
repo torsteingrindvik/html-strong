@@ -101,7 +101,7 @@ impl Settings {
 impl NodeExt for Settings {
     fn into_node(self) -> Node {
         let mut form =
-            o(Form::new(Method::Post, "/hn/settings")).add_class("list-group list-group-checkable");
+            Form::new(Method::Post, "/hn/settings").class("list-group list-group-checkable");
 
         for option in self.options {
             let name = option.title.to_lowercase();
@@ -111,28 +111,21 @@ impl NodeExt for Settings {
                 input_radio.set_checked();
             }
 
-            let input = o(input_radio)
-                .add_class("list-group-item-check")
-                .set_id(&name);
+            let input = input_radio.class("list-group-item-check").id(&name);
 
-            let label = o(Label::new(&name))
-                .add_class("list-group-item py-3")
-                .add_text(&option.title)
+            let label = Label::new(&name)
+                .class("list-group-item py-3")
+                .text(&option.title)
                 .kid(
-                    o(Span)
-                        .add_class("d-block small opacity-50")
-                        .add_text(&option.description),
+                    Span.class("d-block small opacity-50")
+                        .text(&option.description),
                 );
 
             form.push_kid(input);
             form.push_kid(label);
         }
 
-        form.push_kid(
-            o(Button::new())
-                .add_class("btn btn-primary")
-                .add_text("Save"),
-        );
+        form.push_kid(Button::new().class("btn btn-primary").text("Save"));
 
         form
     }
