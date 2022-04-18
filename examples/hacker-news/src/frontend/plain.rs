@@ -36,13 +36,13 @@ fn plain_story(story: Story) -> Node {
 
 impl Renderable for Plain {
     fn frontpage(&self, stories: Vec<Story>) -> Node {
-        let mut body = Body.into_node();
+        let mut contents = Div.into_node();
 
         for story in stories {
-            body.push_kid(plain_story(story));
+            contents.push_kid(plain_story(story));
         }
 
-        examples_lib::html_doc::<String>(None, None, None, body)
+        examples_lib::html_doc::<String>(None, None, None, contents)
     }
 
     fn comments(&self, _story: Story) -> Node {

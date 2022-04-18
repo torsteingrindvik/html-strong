@@ -84,8 +84,6 @@ impl Renderable for Candy {
             cards.push_kid(candy_story(story, format!("card-{}", index % 5)));
         }
 
-        let body = Body.kid(Div.class("main-container").kid(cards));
-
         examples_lib::html_doc(
             Some(vec![
                 "/hn/static/candy.css",
@@ -93,7 +91,7 @@ impl Renderable for Candy {
             ]),
             None,
             None,
-            body,
+            cards,
         )
     }
 
