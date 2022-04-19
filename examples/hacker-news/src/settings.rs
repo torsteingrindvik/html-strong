@@ -1,5 +1,5 @@
 use html_strong::{
-    document_tree::{o, Node},
+    document_tree::Node,
     science_lab::NodeExt,
     tags::{form::Method, *},
 };
@@ -82,9 +82,7 @@ impl Settings {
     }
 
     pub fn into_page(self) -> Node {
-        let node = self
-            .into_node()
-            .class("d-flex flex-column min-vh-100 justify-content-center");
+        let node = self.into_node();
 
         examples_lib::html_doc(
             Some(vec![

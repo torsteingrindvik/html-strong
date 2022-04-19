@@ -41,7 +41,7 @@ async fn home() -> Result<Html<String>, String> {
                 A::href("https://github.com/torsteingrindvik/html-strong/tree/examples-server")
                     .text("html-strong"),
             )
-            .text(" on a WIP branch, so lots of jank. Enjoy the jumping navbar and font magic."),
+            .text(" on a WIP branch."),
     );
     let html = html_doc(Some(vec!["/static/example.css"]), None, None, contents);
 
@@ -95,6 +95,11 @@ pub fn html_doc<S: AsRef<str>>(
         }
     }
 
+    // Let's generally use the same font everywhere.
+    head.push_kid(Link::stylesheet(
+        mime::TEXT_CSS,
+        "https://fonts.googleapis.com/css2?family=Domine:wght@500&display=swap",
+    ));
     // Always want the "base CSS" used for the top nav.
     head.push_kid(Link::stylesheet(mime::TEXT_CSS, "/static/example.css"));
 
