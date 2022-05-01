@@ -12,7 +12,7 @@ pub struct Plain;
 
 #[cached]
 fn plain_story(story: Story) -> Node {
-    let title = H1.text(format!("#{} - {}", story.rank, story.title));
+    let title = H2.text(format!("#{} - {}", story.rank, story.title));
 
     let subtitle = P.text(format!(
         "{} points • by {} • {}",
@@ -31,7 +31,7 @@ fn plain_story(story: Story) -> Node {
         subtitle
     };
 
-    Div.class("story").kid(title).kid(subtitle)
+    Div.class("story").kid(title).kid(subtitle).kid(Br)
 }
 
 impl Renderable for Plain {
