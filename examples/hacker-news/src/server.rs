@@ -10,16 +10,12 @@ use axum::{
     Router,
 };
 use axum_extra::extract::{cookie::Cookie, CookieJar};
+use examples_lib::{internal_server_error, Example};
 use html_strong::document_tree::Node;
-use reqwest::StatusCode;
 use serde::Deserialize;
-use std::{borrow::Cow, convert::Infallible, net::SocketAddr, time::Instant};
+use std::{borrow::Cow, convert::Infallible, time::Instant};
 use tower::ServiceBuilder;
-use tower_http::{
-    compression::CompressionLayer,
-    services::{ServeDir, ServeFile},
-    trace::TraceLayer,
-};
+use tower_http::services::{ServeDir, ServeFile};
 use tracing::debug;
 
 type Result = std::result::Result<(CookieJar, Html<String>), Cow<'static, str>>;
@@ -34,6 +30,7 @@ fn get_response(contents: Node, jar: CookieJar) -> Result {
 
 fn make_cookie(frontend: &Frontend) -> Cookie<'static> {
     let mut cookie = Cookie::new(frontend::Frontend::COOKIE_NAME, frontend.to_string());
+    cookie.set_path("/");
     cookie.make_permanent();
     cookie
 }
@@ -114,45 +111,45 @@ async fn settings_post(jar: CookieJar, Form(Input { choice }): Form<Input>) -> i
         jar
     };
 
-    std::result::Result::<_, Infallible>::Ok((jar, Redirect::to("/")))
+    std::result::Result::<_, Infallible>::Ok((jar, Redirect::to("/hn")))
 }
 
-async fn internal_server_error(error: std::io::Error) -> (StatusCode, String) {
-    (
-        StatusCode::INTERNAL_SERVER_ERROR,
-        format!("Unhandled internal error: {}", error),
-    )
+pub struct HackerNews {
+    state: SharedState,
 }
 
-pub async fn run(ip: [u8; 4], port: u16) {
-    let state = SharedState::default();
-    tokio::spawn(crate::state_worker::worker(state.clone()));
+impl HackerNews {
+    pub fn new() -> Self {
+        let state = SharedState::default();
+        tokio::spawn(crate::state_worker::worker(state.clone()));
 
-    // build our application with a route
-    let app = Router::new()
-        .route("/", get(front_page))
-        .route("/item", get(comment_page))
-        .route("/settings", get(settings_page).post(settings_post))
-        .route(
-            "/favicon.ico",
-            get_service(ServeFile::new("static/favicon.ico")).handle_error(internal_server_error),
-        )
-        .nest(
-            "/static",
-            get_service(ServeDir::new("static")).handle_error(internal_server_error),
-        )
-        .layer(
-            ServiceBuilder::new()
-                .layer(TraceLayer::new_for_http())
-                .layer(Extension(state))
-                .layer(CompressionLayer::new()),
-        );
+        Self { state }
+    }
+}
 
-    // run it
-    let addr = SocketAddr::from((ip, port));
-    println!("listening on {}", addr);
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+impl Default for HackerNews {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Example for HackerNews {
+    fn router(&self, from_me_to_you: &str) -> Router {
+        Router::new()
+            .route("/", get(front_page))
+            .route("/item", get(comment_page))
+            // TODO: Make a "global" settings page
+            .route("/settings", get(settings_page).post(settings_post))
+            .route(
+                "/favicon.ico",
+                get_service(ServeFile::new("static/favicon.ico"))
+                    .handle_error(internal_server_error),
+            )
+            .nest(
+                "/static",
+                get_service(ServeDir::new(format!("{from_me_to_you}/static")))
+                    .handle_error(internal_server_error),
+            )
+            .layer(ServiceBuilder::new().layer(Extension(self.state.clone())))
+    }
 }

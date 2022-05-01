@@ -9,15 +9,8 @@ use crate::util::time_ago;
 use cached::proc_macro::cached;
 use html_strong::{
     document_tree::{o, Node},
-    global_attributes::Lang,
     science_lab::NodeExt,
-    tags::{
-        form::{self, Method},
-        html,
-        td::td,
-        Body, Br, Div, Form, Head, Img, Input, Link, Meta, Script, Span, Table, Td, Textarea,
-        Title, Tr, A, B, P, U,
-    },
+    tags::{td::td, *},
 };
 use tracing::debug;
 
@@ -33,10 +26,11 @@ fn a2(href_text: &str) -> Node {
 
 #[cached]
 fn body_nav() -> Node {
-    let td_logo = td().style("width:18px;padding-right:4px;").kid(
-        A::href("https://news.ycombinator.com")
-            .kid(Img::new_sized("/static/y18.gif", 18, 18).style("border:1px white solid;")),
-    );
+    let td_logo =
+        td().style("width:18px;padding-right:4px;")
+            .kid(A::href("https://news.ycombinator.com").kid(
+                Img::new_sized("/hn/static/y18.gif", 18, 18).style("border:1px white solid;"),
+            ));
 
     let td_links = td().style("line-height:12pt; height:10px;").kid(
         Span.class("pagetop")
@@ -76,29 +70,10 @@ fn body_spacer() -> Node {
         .style("height:10px")
 }
 
-/// Get the <head>...</head> contents.
-/// The title differs on the frontpage vs. the comment page.
-///
-/// The frontpage wants the RSS alternate element, the comment page does not.
-#[cached]
-fn head(title: String, add_alternate: bool) -> Node {
-    let mut head = Head
-        .kid(Meta::name_content("referrer", "origin"))
-        .kid(Meta::viewport_sane())
-        .kid(Link::stylesheet(mime::TEXT_CSS, "/static/news.css"))
-        .kid(Link::stylesheet(mime::TEXT_CSS, "/static/news-extra.css"))
-        .kid(Link::icon("favicon.ico"));
-    if add_alternate {
-        head.push_kid(Link::alternate("application/rss+xml", "RSS", "rss"))
-    }
-
-    head.kid(Title.text(title))
-}
-
 fn table_fatitem(story: &Story) -> Node {
     let score_id = &format!("score_{}", story.id);
     let unv_id = &format!("unv_{}", story.id);
-    let item_id = &format!("item?id={}", story.id);
+    let item_id = &format!("/hn/item?id={}", story.id);
     let time_ago_href = o(A::href(item_id)).add_text(&time_ago(story.submission_time));
 
     let score_span = Span
@@ -185,9 +160,9 @@ fn table_fatitem(story: &Story) -> Node {
         .kid(
             Tr.kid(Td::colspan(2)).kid(
                 td().kid(
-                    Form::new(Method::Post, "comment")
+                    Form::new(form::Method::Post, "comment")
                         .kid(Input::hidden("parent", &story.id.to_string()))
-                        .kid(Input::hidden("goto", &format!("item?id={}", story.id)))
+                        .kid(Input::hidden("goto", &format!("/hn/item?id={}", story.id)))
                         .kid(Input::hidden("hmac", "hmac-of-what?"))
                         .kid(Textarea::new("text", 8, 80))
                         .kid(Br)
@@ -221,34 +196,33 @@ fn tr_comment(comment: &Comment) -> Node {
                 id="30897201" n="1" href="javascript:void(0)">[–]</a><span
                 class="onstory"></span> </span></div>
     */
-    let td_default_div_comhead = Div.kid(
-        Span.class("comhead")
-            .kid(
-                A::href(&format!("user?id={}", comment.author))
-                    .class("hnuser")
-                    .text(&comment.author),
-            )
-            .kid(
-                Span.class("age")
-                    .set_title(&comment.time.to_string())
-                    .kid(A::href(&format!("item?id={}", comment.id)).text(time_ago(comment.time))),
-            )
-            .kid(Span.id(format!("unv_{}", comment.id)))
-            .kid(
-                Span.class("navs").text(PIPE_DELIMITER).kid(
-                    A::href(&format!("#{}", comment.id))
-                        .class("clicky")
-                        .text("next"),
-                ), // TODO: aria-hidden
-            )
-            .kid(
-                A::href("javascript:void(0)")
-                    .class("togg clicky")
-                    .id(&comment.id.to_string())
-                    .text("[-]"), // TODO: n="1", n="<number>", what does it do?
-            )
-            .kid(Span.class("onstory")),
-    );
+    let td_default_div_comhead =
+        Div.kid(
+            Span.class("comhead")
+                .kid(
+                    A::href(&format!("user?id={}", comment.author))
+                        .class("hnuser")
+                        .text(&comment.author),
+                )
+                .kid(Span.class("age").set_title(&comment.time.to_string()).kid(
+                    A::href(&format!("/hn/item?id={}", comment.id)).text(time_ago(comment.time)),
+                ))
+                .kid(Span.id(format!("unv_{}", comment.id)))
+                .kid(
+                    Span.class("navs").text(PIPE_DELIMITER).kid(
+                        A::href(&format!("#{}", comment.id))
+                            .class("clicky")
+                            .text("next"),
+                    ), // TODO: aria-hidden
+                )
+                .kid(
+                    A::href("javascript:void(0)")
+                        .class("togg clicky")
+                        .id(&comment.id.to_string())
+                        .text("[-]"), // TODO: n="1", n="<number>", what does it do?
+                )
+                .kid(Span.class("onstory")),
+        );
 
     /*
     All of this stuff:
@@ -313,7 +287,7 @@ fn hnstory(story: Story) -> Node {
     let title_link = if let Some(url) = &story.url {
         url.to_string()
     } else {
-        format!("item?id={}", story.id)
+        format!("/hn/item?id={}", story.id)
     };
 
     let mut title = td()
@@ -379,7 +353,7 @@ fn hnstory(story: Story) -> Node {
                         Span.class("age")
                             .set_title("2022-03-28T16:35:29") // TODO: This thing
                             .kid(
-                                A::href(&format!("item?id={}", story.id))
+                                A::href(&format!("/hn/item?id={}", story.id))
                                     .text(time_ago(story.submission_time)),
                             ),
                     )
@@ -388,8 +362,7 @@ fn hnstory(story: Story) -> Node {
                     .kid(A::href(&format!("hide?id={}&goto=news", story.id)))
                     .text("hide")
                     .text(PIPE_DELIMITER)
-                    .kid(A::href(&format!("item?id={}", { story.id })))
-                    .text(&comment_text),
+                    .kid(A::href(&format!("/hn/item?id={}", { story.id })).text(comment_text)),
             ),
         )
 }
@@ -404,8 +377,8 @@ fn body_stories(stories: Vec<Story>) -> Node {
     Tr.kid(td().kid(items))
 }
 
-fn body(body_node: Node) -> Node {
-    Body.kid(
+fn main_contents(body_node: Node) -> Node {
+    Div.kid(
         Table
             .id("hnmain")
             .kid(body_nav())
@@ -416,13 +389,8 @@ fn body(body_node: Node) -> Node {
 }
 
 #[cached]
-fn script() -> Node {
-    Script.into_node()
-}
-
-#[cached]
 fn body_footer() -> Node {
-    let invisible_gif = Img::new_sized("/static/s.gif", 0, 10);
+    let invisible_gif = Img::new_sized("/hn/static/s.gif", 0, 10);
     let divider = Table.kid(Tr.kid(td()).id("footer-divider"));
     let applications = A::href("https://www.ycombinator.com/apply/")
         .text("Applications are open for YC Summer 2022");
@@ -471,24 +439,24 @@ impl Renderable for Original {
 
         let story_nodes = body_stories(stories);
 
-        o(html::Html)
-            .add_attr(("op", "news"))
-            .add_attr(Lang::English)
-            .kid(head("Hacker News".into(), true))
-            .kid(body(story_nodes))
-            .kid(script())
+        examples_lib::html_doc(
+            Some(vec!["/hn/static/news.css", "/hn/static/news-extra.css"]),
+            None,
+            None,
+            main_contents(story_nodes),
+        )
     }
 
     fn comments(&self, story: Story) -> Node {
-        let title = format!("{} | Hacker News", story.title);
+        let _title = format!("{} | Hacker News", story.title);
 
         let comment_nodes = body_comments(story);
 
-        o(html::Html)
-            .add_attr(("op", "item"))
-            .add_attr(Lang::English)
-            .kid(head(title, false))
-            .kid(body(comment_nodes))
-            .kid(script())
+        examples_lib::html_doc(
+            Some(vec!["/hn/static/news.css", "/hn/static/news-extra.css"]),
+            None,
+            None,
+            main_contents(comment_nodes),
+        )
     }
 }

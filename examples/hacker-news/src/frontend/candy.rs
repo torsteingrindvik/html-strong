@@ -1,5 +1,5 @@
 use cached::proc_macro::cached;
-use html_strong::{document_tree::Node, science_lab::NodeExt, tags::*, template};
+use html_strong::{document_tree::Node, science_lab::NodeExt, tags::*};
 
 use crate::story::Story;
 
@@ -84,18 +84,15 @@ impl Renderable for Candy {
             cards.push_kid(candy_story(story, format!("card-{}", index % 5)));
         }
 
-        let body = Body.kid(Div.class("main-container").kid(cards));
-        let head = template::head()
-            .kid(Link::stylesheet(mime::TEXT_CSS, "/static/candy.css"))
-            .kid(Link::stylesheet(
-                mime::TEXT_CSS,
+        examples_lib::html_doc(
+            Some(vec![
+                "/hn/static/candy.css",
                 "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css",
-            ));
-
-        template::HtmlDocumentBuilder::new()
-            .with_head(head)
-            .with_body(body)
-            .build()
+            ]),
+            None,
+            None,
+            cards,
+        )
     }
 
     fn comments(&self, _story: Story) -> Node {

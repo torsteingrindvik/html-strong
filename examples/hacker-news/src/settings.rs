@@ -1,8 +1,7 @@
 use html_strong::{
-    document_tree::{o, Node},
+    document_tree::Node,
     science_lab::NodeExt,
     tags::{form::Method, *},
-    template,
 };
 
 /*
@@ -83,30 +82,24 @@ impl Settings {
     }
 
     pub fn into_page(self) -> Node {
-        let self_ = self.into_node();
+        let node = self.into_node();
 
-        let head = template::head()
-            .kid(Link::stylesheet(
-                mime::TEXT_CSS,
+        examples_lib::html_doc(
+            Some(vec![
                 "https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css",
-            ))
-            .kid(Link::stylesheet(mime::TEXT_CSS, "/static/list-groups.css"));
-
-        template::HtmlDocumentBuilder::new()
-            .with_head(head)
-            .with_body(
-                o(Body)
-                    .kid(self_)
-                    .add_class("d-flex flex-column min-vh-100 justify-content-center"),
-            )
-            .build()
+                "/hn/static/list-groups.css",
+            ]),
+            None,
+            None,
+            node,
+        )
     }
 }
 
 impl NodeExt for Settings {
     fn into_node(self) -> Node {
         let mut form =
-            o(Form::new(Method::Post, "/settings")).add_class("list-group list-group-checkable");
+            Form::new(Method::Post, "/hn/settings").class("list-group list-group-checkable");
 
         for option in self.options {
             let name = option.title.to_lowercase();
@@ -116,28 +109,21 @@ impl NodeExt for Settings {
                 input_radio.set_checked();
             }
 
-            let input = o(input_radio)
-                .add_class("list-group-item-check")
-                .set_id(&name);
+            let input = input_radio.class("list-group-item-check").id(&name);
 
-            let label = o(Label::new(&name))
-                .add_class("list-group-item py-3")
-                .add_text(&option.title)
+            let label = Label::new(&name)
+                .class("list-group-item py-3")
+                .text(&option.title)
                 .kid(
-                    o(Span)
-                        .add_class("d-block small opacity-50")
-                        .add_text(&option.description),
+                    Span.class("d-block small opacity-50")
+                        .text(&option.description),
                 );
 
             form.push_kid(input);
             form.push_kid(label);
         }
 
-        form.push_kid(
-            o(Button::new())
-                .add_class("btn btn-primary")
-                .add_text("Save"),
-        );
+        form.push_kid(Button::new().class("btn btn-primary").text("Save"));
 
         form
     }

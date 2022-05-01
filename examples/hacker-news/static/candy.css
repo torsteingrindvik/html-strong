@@ -1,16 +1,6 @@
-* {
-	margin    : 0;
-	padding   : 0;
-	box-sizing: border-box;
-}
-
 body {
 	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
 		Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-}
-
-.main-container {
-	padding: 30px;
 }
 
 /* HEADING */
@@ -46,10 +36,8 @@ body {
 }
 
 .card {
-	margin-bottom     : 20px;
-	margin-left       : 20vh;
-	margin-right      : 20vh;
-	padding           : 20px;
+	margin-bottom     : 2rem;
+	padding           : 2rem;
 	min-height        : 200px;
 	display           : grid;
 	grid-template-rows: 20px 50px 1fr 50px;

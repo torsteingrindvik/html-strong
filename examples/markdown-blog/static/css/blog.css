@@ -1,17 +1,6 @@
-p,
-h1,
-h2 {
-	font-family: 'Domine', serif;
-}
-
 /* Air between sections */
 h2 {
 	padding-top: 5%;
-}
-
-html {
-	padding-left : 15%;
-	padding-right: 15%;
 }
 
 code,
@@ -23,6 +12,5 @@ img {
 
 code {
 	font-family: 'Comic Mono', monospace;
-	line-height: 1.2rem;
 	font-weight: bolder;
 }
