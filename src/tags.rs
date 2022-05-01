@@ -41,6 +41,7 @@ pub_mod_and_export![
     link::Link,
     title::Title,
     tr::Tr,
+    th::Th,
     td::Td,
     table::Table,
     img::Img,

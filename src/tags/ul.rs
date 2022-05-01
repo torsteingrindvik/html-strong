@@ -1,6 +1,6 @@
 use super::Tag;
 
-/// Ul.
+/// The unordered list element, Ul. See [here](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/ul).
 #[derive(Debug, Clone)]
 pub struct Ul;
 
