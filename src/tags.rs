@@ -56,7 +56,8 @@ pub_mod_and_export![
     blockquote::Blockquote,
     pre::Pre,
     code::Code,
-    nav::Nav
+    nav::Nav,
+    footer::Footer
 ];
 
 crate_mod![invisible::Invisible, root::Root];
