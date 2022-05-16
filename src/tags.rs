@@ -57,7 +57,8 @@ pub_mod_and_export![
     pre::Pre,
     code::Code,
     nav::Nav,
-    footer::Footer
+    footer::Footer,
+    style::Style
 ];
 
 crate_mod![invisible::Invisible, root::Root];

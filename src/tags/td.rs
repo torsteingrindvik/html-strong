@@ -5,7 +5,7 @@ use crate::global_attributes::Attribute;
 use super::Tag;
 
 #[derive(Debug, Clone)]
-pub struct Colspan(NonZeroUsize);
+pub struct Colspan(pub(crate) NonZeroUsize);
 
 impl Attribute for Colspan {
     fn name(&self) -> &'static str {
