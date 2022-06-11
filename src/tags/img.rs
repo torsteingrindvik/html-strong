@@ -4,7 +4,7 @@ use super::Tag;
 
 /// Source image.
 #[derive(Debug, Clone)]
-struct Src(String);
+pub struct Src(pub String);
 
 impl Attribute for Src {
     fn name(&self) -> &'static str {
@@ -18,7 +18,7 @@ impl Attribute for Src {
 
 /// Image width.
 #[derive(Debug, Clone)]
-struct Width(usize);
+pub struct Width(pub usize);
 
 impl Attribute for Width {
     fn name(&self) -> &'static str {
@@ -32,7 +32,7 @@ impl Attribute for Width {
 
 /// Image height.
 #[derive(Debug, Clone)]
-struct Height(usize);
+pub struct Height(pub usize);
 
 impl Attribute for Height {
     fn name(&self) -> &'static str {

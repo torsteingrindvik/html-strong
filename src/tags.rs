@@ -58,7 +58,8 @@ pub_mod_and_export![
     code::Code,
     nav::Nav,
     footer::Footer,
-    style::Style
+    style::Style,
+    iframe::Iframe
 ];
 
 crate_mod![invisible::Invisible, root::Root];
