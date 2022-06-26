@@ -29,6 +29,7 @@ pub_mod_and_export![
     em::Em,
     h1::H1,
     h2::H2,
+    h3::H3,
     hr::Hr,
     li::Li,
     p::P,
