@@ -1,19 +1,6 @@
 use crate::global_attributes::Attribute;
 
-use super::Tag;
-
-#[derive(Debug, Clone)]
-pub struct Src(String);
-
-impl Attribute for Src {
-    fn name(&self) -> &'static str {
-        "src"
-    }
-
-    fn value(&self) -> String {
-        self.0.to_string()
-    }
-}
+use super::{Tag, img::Src};
 
 /// Script.
 #[derive(Debug, Clone)]

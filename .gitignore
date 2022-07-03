@@ -1,3 +1,7 @@
 /target
 /out
 Cargo.lock
+
+**/.png
+**/.jpg
+**/.jpeg

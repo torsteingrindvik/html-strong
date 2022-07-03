@@ -61,7 +61,9 @@ pub_mod_and_export![
     footer::Footer,
     style::Style,
     iframe::Iframe,
-    main::Main
+    main::Main,
+    video::Video,
+    source::Source
 ];
 
 crate_mod![invisible::Invisible, root::Root];
