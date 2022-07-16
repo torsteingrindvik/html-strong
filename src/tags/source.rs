@@ -5,6 +5,7 @@ use super::{img::Src, Tag};
 #[derive(Debug, Clone)]
 enum Type_ {
     Webm,
+    Mp4,
 }
 
 impl Attribute for Type_ {
@@ -15,6 +16,7 @@ impl Attribute for Type_ {
     fn value(&self) -> String {
         match self {
             Type_::Webm => "video/webm".to_string(),
+            Type_::Mp4 => "video/mp4".to_string(),
         }
     }
 }
@@ -32,6 +34,13 @@ impl Source {
     pub fn new_webm<S: AsRef<str>>(source: S) -> Self {
         Self {
             type_: Type_::Webm,
+            src: Src(source.as_ref().to_string()),
+        }
+    }
+
+    pub fn new_mp4<S: AsRef<str>>(source: S) -> Self {
+        Self {
+            type_: Type_::Mp4,
             src: Src(source.as_ref().to_string()),
         }
     }
